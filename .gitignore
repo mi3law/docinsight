@@ -1,0 +1,4 @@
+.DS_Store
+node_modules/
+# Spike recordings stay out of git until anonymised (see spike/README.md)
+spike/results/raw/
