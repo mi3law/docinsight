@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self' https://accounts.google.com/gsi/client; style-src 'self' https://accounts.google.com/gsi/style; img-src 'self' data:; connect-src https://docs.google.com https://www.googleapis.com https://accounts.google.com/gsi/; frame-src https://accounts.google.com/gsi/; base-uri 'none'; form-action 'none'">
+  <meta name="referrer" content="strict-origin">
+  <title>DocInsight sign-in test</title>
+  <link rel="stylesheet" href="../extension/diagnostics.css">
+  <script type="module" src="bearer.js"></script>
+</head>
+<body>
+  <header>
+    <h1>DocInsight sign-in test (spike)</h1>
+    <p class="sub">Finds out whether Google gives a web page, signed in with the school's Google sign-in, the same full edit history the extension reads. It reads nothing but the history's size and saves nothing; the result below has no document text.</p>
+  </header>
+  <main>
+    <ol>
+      <li><label for="link">Paste the link of one of your test Docs (one you can edit):</label><br>
+        <input id="link" type="url" size="80" placeholder="https://docs.google.com/document/d/…/edit" autocomplete="off"></li>
+      <li>Press each button in turn. Each asks Google for one permission and then tries the history with it. Sign in with your school account.</li>
+    </ol>
+    <p class="buttons" id="buttons"></p>
+    <p id="status" aria-live="polite"></p>
+    <h2>Result</h2>
+    <pre id="out">Nothing tried yet.</pre>
+    <p class="buttons"><button type="button" id="save" class="ghost">Save result</button></p>
+    <p class="hint">Put the saved file in the DocInsight folder under <code>spike/results/</code>.</p>
+  </main>
+</body>
+</html>

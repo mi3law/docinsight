@@ -1,0 +1,9 @@
+{
+  "name": "docinsight",
+  "private": true,
+  "type": "module",
+  "description": "See how a Google Doc was written: revision timeline, bulk insertions and writing-process indicators, all in the browser",
+  "scripts": {
+    "test": "node --test \"test/*.test.js\""
+  }
+}

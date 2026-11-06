@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>DocInsight diagnostics</title>
+  <link rel="stylesheet" href="diagnostics.css">
+  <script type="module" src="diagnostics.js"></script>
+</head>
+<body>
+  <header>
+    <h1>DocInsight diagnostics</h1>
+    <p class="sub">Checks that DocInsight can read this document's history and rebuild its text exactly, and measures how Google stored the typing. Use it only on your own test documents when saving a recording.</p>
+    <button type="button" id="close" class="ghost">Close</button>
+  </header>
+  <main>
+    <p id="status" aria-live="polite">Starting…</p>
+    <progress id="progress" hidden></progress>
+    <section id="results" hidden>
+      <h2>Exit criteria</h2>
+      <table id="criteria"></table>
+      <h2>Rebuilt text against Google's text export</h2>
+      <div id="tabs"></div>
+      <h2>How Google stored the typing</h2>
+      <div id="granularity"></div>
+      <h2>Bulk insertions found</h2>
+      <div id="bulk"></div>
+      <h2>Details</h2>
+      <pre id="details"></pre>
+      <h2>Save</h2>
+      <p>The report has no document text, names or ids: only counts, sizes, timings and whether the texts matched. The recording is the whole history with names and ids replaced and the letters substituted, for DocInsight's tests; save it only from your own test documents.</p>
+      <p><label><input type="checkbox" id="keep-text"> Keep the original text in the recording (your own test document only)</label></p>
+      <p class="buttons"><button type="button" id="save-report">Save report</button> <button type="button" id="save-recording">Save recording</button></p>
+      <p class="hint">Put the saved files in the DocInsight folder under <code>spike/results/</code>.</p>
+    </section>
+  </main>
+</body>
+</html>
