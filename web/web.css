@@ -1,0 +1,14 @@
+/* The web page's landing view; the analysis itself uses src/ui/ui.css. */
+.landing { max-width: 1000px; margin: 0 auto; padding: 20px 16px 48px; }
+.lede { font-size: 16px; max-width: 70ch; }
+.cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 14px; margin: 16px 0; }
+.card h2, .about h2 { font-size: 17px; margin-bottom: 6px; }
+.drop { display: flex; align-items: center; justify-content: center; min-height: 110px; border: 2px dashed var(--line-2); border-radius: 8px; padding: 12px; text-align: center; cursor: pointer; color: var(--muted); }
+.drop.over { border-color: var(--accent); background: color-mix(in srgb, var(--accent) 8%, transparent); }
+.drop input { position: absolute; width: 1px; height: 1px; opacity: 0; }
+.drop:focus-within { outline: 3px solid var(--focus); outline-offset: 2px; }
+.link-form { display: grid; grid-template-columns: 1fr auto; gap: 6px 8px; align-items: center; }
+.link-form label { grid-column: 1 / -1; color: var(--muted); }
+.link-form input { padding: 7px 9px; border: 1px solid var(--line-2); border-radius: 6px; background: var(--surface); min-width: 0; }
+.about { margin-top: 8px; }
+code { font-family: var(--mono); font-size: 13px; }

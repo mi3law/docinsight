@@ -60,9 +60,9 @@ export function runIndicators(A, references) {
         { label: `Chunks (${S.chunkChars}–${S.bulkChars - 1} characters), listed not flagged`, value: int(A.chunks.length) },
         { label: 'Internal moves (excluded)', value: int(A.moves.length) },
       ],
-      rule: `One entry inserting at least ${S.bulkChars} characters and ${S.bulkWords} words. Paste share = characters that arrived in bulk insertions and are still in the final text, over the final length.`,
+      rule: `One entry inserting at least ${S.bulkChars} characters and ${S.bulkWords} words. Bulk-insertion share = characters that arrived in bulk insertions and are still in the final text, over the final length.`,
       strength: 'Near-certain for a plain paste; says nothing about typing bots.',
-      falsePositives: "The student's own draft or notes pasted in; voice typing; long quotations; templates. Internal moves are recognised by character identity and excluded.",
+      falsePositives: "The student's own draft or notes brought in from elsewhere; voice typing; long quotations; templates. Internal moves are recognised by character identity and excluded.",
     }));
   }
 
@@ -218,7 +218,7 @@ export function runIndicators(A, references) {
       let a = 0;
       for (const s of A.sessions) {
         if (!s.writerEntries) continue;
-        for (let t = s.t0; t < s.t1; t += win) {
+        for (let t = s.t0; t + win <= s.t1; t += win) {   // whole windows only, so a session's last minutes don't skew it
           let c = 0;
           while (a < w.length && E.t[w[a]] < t) a++;
           for (let b = a; b < w.length && E.t[w[b]] < t + win; b++) if (K[w[b]] === KIND.TYPED) c += E.insNew[w[b]];
@@ -238,7 +238,7 @@ export function runIndicators(A, references) {
             : `Typing speed varied as usual (variation ${f2(cv)} across ${rates.length} two-minute windows).`,
       values: [{ label: 'Two-minute windows with typing', value: int(rates.length) }, { label: 'Median speed (characters per minute)', value: int(med) }, { label: 'Fastest window', value: int(mx) }, { label: 'Coefficient of variation', value: f2(cv) }],
       chart: { kind: 'series', values: rates, label: 'Typing speed per two-minute window (characters per minute)' },
-      rule: 'Typed characters per two-minute window (windows with at least 20). Worth a look when the coefficient of variation is under 0.15 over 10 or more windows (implausibly flat), or when one window is more than 3 times the median (a section far faster than the rest).',
+      rule: 'Typed characters per whole two-minute window of a session (windows with at least 20). Worth a look when the coefficient of variation is under 0.15 over 10 or more windows (implausibly flat), or when one window is more than 3 times the median (a section far faster than the rest).',
       strength: 'Medium.',
       falsePositives: 'Breaks and distractions; copying out a passage the student wrote by hand.',
     }));
