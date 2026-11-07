@@ -1,6 +1,6 @@
 # DocInsight — PRD
 
-Draft v0.6, 7 November 2026. Built through questions and answers before any code. The twelve questions of v0.2 were answered on 6 November 2026 and the eight of round two on 7 November 2026; the answers are folded in below and listed under [Decisions](#decisions-and-open-items), with the few items still open. The spec is complete enough to start the spike. "DocInsight" is the project folder's name and a working title.
+Draft v0.7, 7 November 2026. Built through questions and answers before any code. The twelve questions of v0.2 were answered on 6 November 2026 and the eight of round two on 7 November 2026; the answers are folded in below and listed under [Decisions](#decisions-and-open-items), with the few items still open. v0.7 adds what the build and the first round of the spike settled: see [Build notes](#build-notes-7-november-2026). "DocInsight" is the project folder's name and a working title.
 
 How this draft was grounded: on 6 November 2026 the live code of four replay extensions (Draftback 0.0.31, Revision History 1.14.1, GPTZero 2026.11.1, WriteHuman 1.0.1), two open-source changelog parsers (Harvard VPAL's gdocrevisions, SPARDiffData), Google's documentation and the papers in [Sources](#sources) were read, and the product claims that matter most were fact-checked a second time. Facts that only a live test can settle are marked *to verify* and belong to the [spike](#milestones).
 
@@ -51,7 +51,7 @@ Teacher-only. No student-facing mode.
 | Method | Needs | Fidelity | Runs from | Status |
 | --- | --- | --- | --- | --- |
 | Extension content script on the Doc page: same-origin fetch with the user's cookies, XSRF token read from `_docs_flag_initialData.info_params.token` in the page (MAIN-world script) or regexed from the page HTML | Chrome, extension installed, edit access | Full changelog | The open Doc | Proven: Draftback, Revision History, GPTZero and WriteHuman all do exactly this |
-| Static page calling the same endpoints with an OAuth bearer token (no cookies, no XSRF token) | Internal OAuth client as in CensorSearch; scope *to verify* (`drive.readonly` likely; `drive.file` with the Picker unknown); edit access | Full changelog, if it works | GitHub Pages, any browser | *To verify.* Seen live on 6 Nov 2026: `revisions/load` answers CORS preflights from any origin, allows the `authorization` header, and returns 401 with `WWW-Authenticate: Bearer` to a bad token. Harvard's gdocrevisions fetched it server-side with a Drive-scoped token in 2019. Not yet tried with a real token from a browser. |
+| Static page calling the same endpoints with an OAuth bearer token (no cookies, no XSRF token) | Internal OAuth client as in CensorSearch; scope *to verify* (`drive.readonly` likely; `drive.file` with the Picker unknown); edit access | Full changelog, if it works | GitHub Pages, any browser | **Proven 7 Nov 2026** (spike round 1): from `https://mi3law.github.io` with the school's Internal client and a `drive.readonly` token, `revisions/tiles` and `revisions/load` both answered 200 with the full changelog, no cookies and no XSRF token. Narrower scopes also answered, but those tokens carried the earlier grant; round 2 asks for each scope alone. |
 | Drive API v3 `revisions.list` plus a text export of each revision, diffed | Internal OAuth client; `drive.readonly`, or `drive.file` with the Picker | Coarse: grouped revisions, possibly incomplete, no typing cadence | GitHub Pages | Documented; the fallback view |
 | Apps Script `UrlFetchApp` with the user's token on the internal endpoints | A script deployment per school; the page served by Apps Script itself | Full changelog | Apps Script | Only if the bearer route fails on CORS; a 2024 gist does this for Sheets tiles |
 | Bookmarklet on the Doc page | Nothing installed | Full | The Doc page | Rejected: docs.google.com ships a nonce plus strict-dynamic CSP with Trusted Types, and Chromium never exempted bookmarklets from page policy |
@@ -62,8 +62,8 @@ Teacher-only. No student-facing mode.
 **Decision (6 November 2026): the extension is the product; the web app is its companion.**
 
 - The Chrome extension carries the full interface inside the Docs tab: it reads the changelog with the teacher's own session (the proven route), and shows the timeline, document views, summary and export over the Doc the teacher has open. It works for any account with edit access, with no OAuth client and no sign-in of its own. Docs draws the document itself on a canvas, so nothing can be highlighted in the real document; DocInsight renders its own copy of the text (see Where the interface lives).
-- The web app on GitHub Pages serves two cases: opening a record exported from the extension (full fidelity, nothing to install), and one-off use on a pasted Doc link with the teacher's school sign-in. How much the one-off mode can show is what the spike decides: the full changelog, if the internal endpoints accept a Google Identity Services bearer token from the page's origin, or else the coarse Drive API view (grouped revisions, diffs between exported versions, no typing cadence).
-- The engine (parse, replay, statistics, flags) and the interface are shared modules used by both. Vanilla JavaScript with no build step, as in CensorSearch, unless packaging the extension justifies one. (still open: build step, see Decisions).
+- The web app on GitHub Pages serves two cases: opening a record exported from the extension (full fidelity, nothing to install), and one-off use on a pasted Doc link with the teacher's school sign-in. **Settled by the spike (7 November 2026): the one-off mode gets the full changelog**, because the internal endpoints accept a Google Identity Services bearer token (`drive.readonly`) from the page's origin. The coarse Drive API view is not built (and the Drive API is not even enabled in the school's project).
+- The engine (parse, replay, statistics, flags) and the interface are shared modules used by both. Vanilla JavaScript with no build step, as in CensorSearch (settled: the unpacked extension loads ES modules directly, so no build step is needed).
 - Nothing leaves the browser, there are no analytics, and the thresholds are published in the app (Revision History is the only vendor that publishes its thresholds; DocInsight will too).
 
 ### Extension design
@@ -284,6 +284,37 @@ Nobody offers: a scrubbable timeline sized by change, before-and-after highlight
 2. **v1.1.** Batch triage from a list of links or a shared folder; per-student baselines in a teacher-owned Google Sheet; accommodation settings.
 3. **Later.** Sheets, Slides, the Drive cross-check, cohort context, the policy text.
 
+## Build notes, 7 November 2026
+
+### Spike, round 1
+
+The teacher loaded the unpacked extension and ran the diagnostics page on four of their own test Docs (a short one, a long one, one with a table and two images, one with three tabs; all built by pasting), and the sign-in test page on GitHub Pages. Results are in `spike/results/round1/`; anonymised recordings of the four Docs are test fixtures in `test/fixtures/recorded/`.
+
+| Exit criterion | Result |
+| --- | --- |
+| Read `tiles` and `load` with the page's own session | Yes, all four. `info_params` holds `token` and `ouid`. `load` from revision 1 also returns a `chunkedSnapshot` (ignored when the range starts at 1). |
+| Rebuilt text equals the exported plain text | Not yet checked: `/document/d/{id}/export?format=txt` answered HTTP 400 from the content script. Lengths and word counts are recorded and tested; round 2 retries. |
+| Table and image rebuild without index drift | Yes: zero drift. Tables are inline control characters (U+0010 table start, U+0012 row, U+001C cell, U+0011 table end); an image is a `*` placeholder inserted by `is` and tied to its entity by `te {spi}` (with `ae` / `de` adding and removing the entity). |
+| A known paste shows as one entry | Yes: every pasted text arrived in one `mlti` entry (an `is` plus up to 137 style operations). A paste undone and repeated is recognised as an internal move, so it is not counted twice. |
+| Multi-tab document rebuilds every tab | Yes, three tabs, no drift. Edits outside the first tab come as `nm {nmr: ["mei", tabId], nmc: mutation}`. Tab names: `mkch {d: [[1, title]]}` names the first tab when the document gets tabs; `ac {d: [tabId, [1, title], [position]]}` adds a tab. A `{ty: "null"}` operation opens each editing session. |
+| Characters-per-entry of ordinary typing recorded | Not yet: the test Docs had almost no typing. Round 2. |
+| Bearer route answered, with the scope | **Yes**, with `drive.readonly` (see Ways to read it). The Drive API `revisions.list` (the coarse route) answered 403 because the Drive API is not enabled in the project; it is not needed. |
+| Teacher's own account recognised | No: `info_params.ouid` is not the author id used in the change log. Fallback built: "This is my account" under Authors, remembered in the extension's storage. |
+
+### What the build decided or assumed
+
+Recorded here so they can be revisited; each is a setting or a single rule in the code.
+
+- **Steps:** the timeline opens at the *finest* level (entry, burst, minute, session) that fits in about 300 bars; "coarsest" in the text above read as a slip, since the session level would always fit. Bar height grows with the square root of the characters inserted, so a 3,000-character insertion does not flatten the typing around it.
+- **Interface words:** "bulk-insertion share" in the interface for what this PRD calls paste share; the word "paste" appears only in definitions and in the list of legitimate causes.
+- **Granularity:** "keystroke-level" when at least 60% of the writer's typing entries hold one character (with at least 200 typing entries); the rhythm indicators are computed only then, and say "insufficient granularity" otherwise. To be re-set from the first real documents.
+- **Indicator rules the PRD left open:** linearity is worth a look at an index of 0.97 or more with under 1 backward jump per 1,000 typed characters on 500 or more typed words; a deletion run is a series of adjacent backspaces in one burst (each backspace is its own entry at keystroke level, so runs of entries would always average 1); rate stationarity uses whole two-minute windows of a session, worth a look below a coefficient of variation of 0.15 over 10 windows or at one window over 3 times the median; pause structure is worth a look when sentence pauses are not 1.5 times inside-word pauses; letter-pair timing when same-hand pairs are under 10 ms slower over 200 or more of each; formatting order above 50% of 10 or more formatting edits after the last text; session structure for 1,500 or more typed words in one session id at a variation under 0.25; typo realism when there are no corrected slips in 2,000 or more typed characters; "a class period" is 60 minutes; dictation-like is 10 or more entries of 15 to 300 characters making half the typed text with deletions under 5% of insertions.
+- **Baseline:** the snapshot of a consolidated history, any entry of revision 1 inserting 40 or more characters, and another account's text of 40 or more characters before the writer's first insertion.
+- **Internal moves and suggestion accepts** transfer character identity: the same text deleted and inserted in one entry (any length), or deleted and re-inserted in the same session within the move window (40 or more characters, trimmed of surrounding spaces). Accepted text keeps its original origin.
+- **The record** embeds the history (style values stripped, which is most of its size) as JSON in a non-executing script element, so the web page can reopen it; a checkbox leaves it out. It has a strict CSP of its own and no scripts.
+- **The web page** reuses the CensorSearch Internal client (its consent screen says "CensorSearch") and asks for `drive.readonly`; `web/config.js` takes a DocInsight client when the school makes one. Thresholds and "this is my account" are kept in the browser's local storage on the web page, in `chrome.storage.local` in the extension.
+- **Not built in v1:** marking known-human documents as references for the rhythm indicators (the engine compares against a reference sample when given one; the interface to keep one is left for v1.1, with the baselines); the compact side-panel summary (a v1 should); surviving spelling errors for typo realism (no dictionary in the browser).
+
 ## Decisions and open items
 
 Answers of 6 November 2026 to the twelve questions of v0.2.
@@ -305,8 +336,11 @@ Answers of 6 November 2026 to the twelve questions of v0.2.
 
 Still open:
 
-- Whether the web app's one-link mode gets the full changelog or the coarse Drive API view: the spike decides.
-- Whether a build step is needed to package the extension; the answer is no unless the spike shows otherwise.
+- ~~Whether the web app's one-link mode gets the full changelog or the coarse Drive API view.~~ Settled 7 November 2026: the full changelog, by bearer token with `drive.readonly`. Still to learn (spike round 2): whether `documents.readonly` or `drive.file` alone is enough, which would let the page ask for less.
+- ~~Whether a build step is needed.~~ Settled: no.
+- Whether Google's plain-text export can be read from the Doc page for the automatic text comparison (round 1: HTTP 400; round 2 tries other URL forms, and the diagnostics page accepts a downloaded .txt instead).
+- How Google batches ordinary typing (characters per entry): round 1's test Docs were built by pasting, so this waits for round 2 (a few minutes of typing in a test Doc) and then the first real documents. Until then the rhythm indicators decide per document from its own measurement.
+- Which page value identifies the signed-in teacher in the change log: `info_params.ouid` is not the changelog's author id. Round 2 lists the page's id-like values that match an author; meanwhile "This is my account" is remembered.
 - The exact write path for the baseline sheet (Sheets API from the web app or the extension, or an Apps Script endpoint): settled in the v1.1 spike.
 
 Round two, answered 7 November 2026:

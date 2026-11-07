@@ -15,3 +15,18 @@ Throwaway checks that decide what DocInsight can rely on. Results go in [results
 
 Fixtures the PRD asks for: one short Doc, one long Doc, one with a table and an image, one with tabs. In one of them,
 paste a paragraph from elsewhere once, so the "a known paste shows as one entry" check has something to find.
+
+## Round 1, 7 November 2026
+
+Four of the teacher's own test Docs and the sign-in test. Summary in [PRD.md](../PRD.md#build-notes-7-november-2026);
+reports in [results/round1/](results/round1/); recordings in [test/fixtures/recorded/](../test/fixtures/recorded/).
+
+## Round 2
+
+1. Reload the extension in `chrome://extensions`, then reload the test Docs.
+2. In one test Doc, type a paragraph or two by hand for a few minutes: ordinary typing, fixing a typo or two, going back to
+   change a word earlier on. This measures how Google batches typing.
+3. On each test Doc, press DocInsight, then **Diagnostics** at the top. If Google's export can't be read, download the
+   tab yourself (File, Download, Plain text) and choose the file where the page asks. Save the report and the recording
+   into `results/round2/`.
+4. The sign-in test again: each button now asks for one permission alone. Save the result into `results/round2/`.
