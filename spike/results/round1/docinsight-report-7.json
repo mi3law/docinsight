@@ -1,0 +1,869 @@
+{
+ "spikeVersion": 1,
+ "savedAt": "2026-11-07T10:49:58.191Z",
+ "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/156.0.0.0 Safari/537.36",
+ "page": {
+  "tokenFound": true,
+  "ouidFound": true,
+  "infoKeys": [
+   "token",
+   "ouid",
+   "includes_info_params"
+  ],
+  "hasInitialData": true,
+  "office": false,
+  "teacherIsAuthor": false
+ },
+ "history": {
+  "entries": 7,
+  "revCount": 7,
+  "startRev": 1,
+  "consolidated": false,
+  "tiles": 2,
+  "authors": 1,
+  "fetchMs": 689,
+  "analyseMs": 5,
+  "snapshotShape": null
+ },
+ "firstEntryAgeDays": 0,
+ "opTypes": {
+  "as": 31,
+  "nm": 23,
+  "mlti": 6,
+  "is": 3,
+  "ac": 2,
+  "null": 1,
+  "mkch": 1
+ },
+ "styleTypes": {
+  "document": 3,
+  "headings": 3,
+  "language": 1,
+  "paragraph": 7,
+  "text": 15,
+  "column_sector": 2
+ },
+ "anomalies": {
+  "drift": 0,
+  "badEntries": 0,
+  "badOps": 0,
+  "examples": []
+ },
+ "tabs": [
+  {
+   "id": "t.0",
+   "titleFound": false,
+   "length": 624,
+   "words": 112,
+   "controls": {},
+   "objects": 0,
+   "exportVia": null,
+   "exportStatus": 400,
+   "exact": null,
+   "loose": null,
+   "bare": null,
+   "exportLength": null,
+   "firstDiff": null
+  },
+  {
+   "id": "t.other",
+   "titleFound": false,
+   "length": 716,
+   "words": 123,
+   "controls": {},
+   "objects": 0,
+   "exportVia": null,
+   "exportStatus": 400,
+   "exact": null,
+   "loose": null,
+   "bare": null,
+   "exportLength": null,
+   "firstDiff": null
+  },
+  {
+   "id": "t.other",
+   "titleFound": false,
+   "length": 745,
+   "words": 126,
+   "controls": {
+    "U+000B line break": 1
+   },
+   "objects": 0,
+   "exportVia": null,
+   "exportStatus": 400,
+   "exact": null,
+   "loose": null,
+   "bare": null,
+   "exportLength": null,
+   "firstDiff": null
+  }
+ ],
+ "granularity": {
+  "level": "too-little",
+  "typingEntries": 0,
+  "singleShare": 0,
+  "medianCharsPerEntry": null,
+  "meanCharsPerEntry": null,
+  "perEntry": [
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0
+  ],
+  "perEntryLabels": [
+   "1",
+   "2",
+   "3",
+   "4",
+   "5–9",
+   "10–19",
+   "20–39"
+  ],
+  "gapBins": [
+   0,
+   0,
+   2,
+   1,
+   0,
+   3,
+   0
+  ],
+  "gapLabels": [
+   "<0.1 s",
+   "0.1–0.3 s",
+   "0.3–1 s",
+   "1–2 s",
+   "2–5 s",
+   "5–30 s",
+   "30 s+"
+  ],
+  "medianGapMs": 3610.5,
+  "gapsCount": 6,
+  "supportsRhythm": false
+ },
+ "bulk": [
+  {
+   "chars": 624,
+   "words": 112,
+   "kind": 2,
+   "ops": 6
+  },
+  {
+   "chars": 716,
+   "words": 123,
+   "kind": 2,
+   "ops": 6
+  },
+  {
+   "chars": 745,
+   "words": 126,
+   "kind": 2,
+   "ops": 7
+  }
+ ],
+ "chunks": 0,
+ "moves": 0,
+ "accepts": 0,
+ "restores": 0,
+ "sampleShapes": {
+  "mlti": [
+   {
+    "ty": "mlti",
+    "mts": [
+     {
+      "ty": "as",
+      "st": "document",
+      "si": 0,
+      "ei": 0,
+      "sm": {
+       "ds_lhs": 0,
+       "ds_df": {
+        "df_dm": 0
+       },
+       "ds_ulhfl": false,
+       "ds_b": {
+        "bg_c2": {
+         "hclr_color": "<7 chars>",
+         "clr_type": 0
+        }
+       }
+      }
+     },
+     {
+      "ty": "as",
+      "st": "headings",
+      "si": 0,
+      "ei": 0,
+      "sm": {
+       "hs_h3": {
+        "sdef_ps": {
+         "ps_sb_i": false,
+         "ps_sb": 0
+        },
+        "sdef_ts": {
+         "ts_bd_i": false,
+         "ts_fgc2_i": false,
+         "ts_fgc2": {
+          "hclr_color": "…",
+          "clr_type": "…"
+         },
+         "ts_bd": false
+        }
+       },
+       "hs_t": {
+        "sdef_ps": {
+         "ps_sb_i": false,
+         "ps_sa_i": false,
+         "ps_sa": 0,
+         "ps_sb": 0
+        },
+        "sdef_ts": {
+         "ts_bd_i": true,
+         "ts_fs": 0,
+         "ts_bd": false,
+         "ts_fs_i": false
+        }
+       },
+       "hs_h2": {
+        "sdef_ps": {
+         "ps_sa_i": false,
+         "ps_sa": 0
+        },
+        "sdef_ts": {
+         "ts_bd_i": false,
+         "ts_fs": 0,
+         "ts_bd": false,
+         "ts_fs_i": false
+        }
+       },
+       "hs_h1": {
+        "sdef_ps": {
+         "ps_sb_i": false,
+         "ps_sb": 0
+        },
+        "sdef_ts": {
+         "ts_bd_i": true,
+         "ts_fs": 0,
+         "ts_bd": false,
+         "ts_fs_i": false
+        }
+       },
+       "hs_nt": {
+        "sdef_ps": {
+         "ps_lslm": 0,
+         "ps_lslm_i": false,
+         "ps_sm": 0,
+         "ps_sm_i": false
+        }
+       },
+       "hs_st": {
+        "sdef_ps": {
+         "ps_sb_i": false,
+         "ps_sa_i": false,
+         "ps_sa": 0,
+         "ps_sb": 0
+        },
+        "sdef_ts": {
+         "ts_ff_i": false,
+         "ts_it": false,
+         "ts_fs": 0,
+         "ts_ff": "<5 chars>",
+         "ts_it_i": false,
+         "ts_fs_i": false
+        }
+       },
+       "hs_h6": {
+        "sdef_ps": {
+         "ps_sb_i": false,
+         "ps_sa_i": false,
+         "ps_sa": 0,
+         "ps_sb": 0
+        },
+        "sdef_ts": {
+         "ts_it": true,
+         "ts_bd_i": true,
+         "ts_fs": 0,
+         "ts_it_i": false,
+         "ts_fgc2_i": false,
+         "ts_fgc2": {
+          "hclr_color": "…",
+          "clr_type": "…"
+         },
+         "ts_bd": false,
+         "ts_fs_i": false
+        }
+       },
+       "hs_h5": {
+        "sdef_ps": {
+         "ps_sb_i": false,
+         "ps_sa_i": false,
+         "ps_sa": 0,
+         "ps_sb": 0
+        },
+        "sdef_ts": {
+         "ts_bd_i": true,
+         "ts_fgc2_i": false,
+         "ts_fgc2": {
+          "hclr_color": "…",
+          "clr_type": "…"
+         },
+         "ts_bd": false
+        }
+       },
+       "hs_h4": {
+        "sdef_ps": {
+         "ps_sb_i": false,
+         "ps_sa_i": false,
+         "ps_sa": 0,
+         "ps_sb": 0
+        },
+        "sdef_ts": {
+         "ts_bd_i": true,
+         "ts_fgc2_i": false,
+         "ts_fgc2": {
+          "hclr_color": "…",
+          "clr_type": "…"
+         },
+         "ts_bd": false
+        }
+       }
+      }
+     },
+     {
+      "ty": "as",
+      "st": "language",
+      "si": 0,
+      "ei": 0,
+      "sm": {
+       "lgs_l": "<2 chars>"
+      }
+     },
+     "…5 items"
+    ]
+   },
+   {
+    "ty": "mlti",
+    "mts": [
+     {
+      "ty": "is",
+      "ibi": 0,
+      "s": "<624 chars>"
+     },
+     {
+      "ty": "as",
+      "st": "paragraph",
+      "si": 0,
+      "ei": 0,
+      "sm": {
+       "ps_awao_i": true,
+       "ps_klt_i": true,
+       "ps_ir": 0,
+       "ps_ls_i": true,
+       "ps_ltr": true,
+       "ps_al_i": true,
+       "ps_rd": "<0 chars>",
+       "ps_sd_i": true,
+       "ps_bl_i": true,
+       "ps_sb_i": true,
+       "ps_ifl": 0,
+       "ps_sa_i": true,
+       "ps_shd": false,
+       "ps_pbb": false,
+       "ps_br_i": true,
+       "ps_klt": false,
+       "ps_hd": 0,
+       "ps_bt_i": true,
+       "ps_kwn_i": true,
+       "ps_ifl_i": true,
+       "ps_ts": {
+        "cv": {
+         "op": "<3 chars>",
+         "opValue": []
+        }
+       },
+       "ps_bbtw": null,
+       "ps_lslm": 0,
+       "ps_bb": null,
+       "ps_ls": 0,
+       "ps_bl": null,
+       "ps_kwn": false,
+       "ps_sm_i": true,
+       "ps_sa": 0,
+       "ps_il_i": true,
+       "ps_sb": 0,
+       "ps_br": null,
+       "ps_ir_i": true,
+       "ps_sd": null,
+       "ps_bt": null,
+       "ps_hdid": "<0 chars>",
+       "ps_lslm_i": true,
+       "ps_sm": 0,
+       "ps_bbtw_i": true,
+       "ps_al": 0,
+       "ps_bb_i": true,
+       "ps_pbb_i": true,
+       "ps_awao": false,
+       "ps_il": 0
+      }
+     },
+     {
+      "ty": "as",
+      "st": "text",
+      "si": 0,
+      "ei": 0,
+      "sm": {
+       "ts_ff_i": true,
+       "ts_un_i": true,
+       "ts_bgc2_i": true,
+       "ts_bd_i": true,
+       "ts_va_i": true,
+       "ts_it_i": true,
+       "ts_sc_i": true,
+       "ts_fgc2_i": true,
+       "ts_st_i": true,
+       "ts_tw": 0,
+       "ts_fs_i": true
+      }
+     },
+     "…6 items"
+    ]
+   },
+   {
+    "ty": "mlti",
+    "mts": [
+     {
+      "ty": "mkch",
+      "d": [
+       [
+        0,
+        "<5 chars>"
+       ]
+      ]
+     },
+     {
+      "ty": "ac",
+      "d": [
+       "t.<id>",
+       [
+        0,
+        "<5 chars>"
+       ],
+       [
+        0
+       ]
+      ]
+     },
+     {
+      "ty": "nm",
+      "nmr": [
+       "<3 chars>",
+       "t.<id>"
+      ],
+      "nmc": {
+       "ty": "as",
+       "st": "text",
+       "si": 0,
+       "ei": 0,
+       "sm": {
+        "ts_ff_i": true,
+        "ts_un_i": true,
+        "ts_bgc2_i": true,
+        "ts_bd_i": true,
+        "ts_va_i": true,
+        "ts_it_i": true,
+        "ts_sc_i": true,
+        "ts_fgc2_i": true,
+        "ts_st_i": true,
+        "ts_fs_i": true
+       }
+      }
+     },
+     "…7 items"
+    ]
+   }
+  ],
+  "as": [
+   {
+    "ty": "as",
+    "st": "document",
+    "si": 0,
+    "ei": 0,
+    "sm": {
+     "ds_lhs": 0,
+     "ds_df": {
+      "df_dm": 0
+     },
+     "ds_ulhfl": false,
+     "ds_b": {
+      "bg_c2": {
+       "hclr_color": "<7 chars>",
+       "clr_type": 0
+      }
+     }
+    }
+   },
+   {
+    "ty": "as",
+    "st": "headings",
+    "si": 0,
+    "ei": 0,
+    "sm": {
+     "hs_h3": {
+      "sdef_ps": {
+       "ps_sb_i": false,
+       "ps_sb": 0
+      },
+      "sdef_ts": {
+       "ts_bd_i": false,
+       "ts_fgc2_i": false,
+       "ts_fgc2": {
+        "hclr_color": "<7 chars>",
+        "clr_type": 0
+       },
+       "ts_bd": false
+      }
+     },
+     "hs_t": {
+      "sdef_ps": {
+       "ps_sb_i": false,
+       "ps_sa_i": false,
+       "ps_sa": 0,
+       "ps_sb": 0
+      },
+      "sdef_ts": {
+       "ts_bd_i": true,
+       "ts_fs": 0,
+       "ts_bd": false,
+       "ts_fs_i": false
+      }
+     },
+     "hs_h2": {
+      "sdef_ps": {
+       "ps_sa_i": false,
+       "ps_sa": 0
+      },
+      "sdef_ts": {
+       "ts_bd_i": false,
+       "ts_fs": 0,
+       "ts_bd": false,
+       "ts_fs_i": false
+      }
+     },
+     "hs_h1": {
+      "sdef_ps": {
+       "ps_sb_i": false,
+       "ps_sb": 0
+      },
+      "sdef_ts": {
+       "ts_bd_i": true,
+       "ts_fs": 0,
+       "ts_bd": false,
+       "ts_fs_i": false
+      }
+     },
+     "hs_nt": {
+      "sdef_ps": {
+       "ps_lslm": 0,
+       "ps_lslm_i": false,
+       "ps_sm": 0,
+       "ps_sm_i": false
+      }
+     },
+     "hs_st": {
+      "sdef_ps": {
+       "ps_sb_i": false,
+       "ps_sa_i": false,
+       "ps_sa": 0,
+       "ps_sb": 0
+      },
+      "sdef_ts": {
+       "ts_ff_i": false,
+       "ts_it": false,
+       "ts_fs": 0,
+       "ts_ff": "<5 chars>",
+       "ts_it_i": false,
+       "ts_fs_i": false
+      }
+     },
+     "hs_h6": {
+      "sdef_ps": {
+       "ps_sb_i": false,
+       "ps_sa_i": false,
+       "ps_sa": 0,
+       "ps_sb": 0
+      },
+      "sdef_ts": {
+       "ts_it": true,
+       "ts_bd_i": true,
+       "ts_fs": 0,
+       "ts_it_i": false,
+       "ts_fgc2_i": false,
+       "ts_fgc2": {
+        "hclr_color": "<7 chars>",
+        "clr_type": 0
+       },
+       "ts_bd": false,
+       "ts_fs_i": false
+      }
+     },
+     "hs_h5": {
+      "sdef_ps": {
+       "ps_sb_i": false,
+       "ps_sa_i": false,
+       "ps_sa": 0,
+       "ps_sb": 0
+      },
+      "sdef_ts": {
+       "ts_bd_i": true,
+       "ts_fgc2_i": false,
+       "ts_fgc2": {
+        "hclr_color": "<7 chars>",
+        "clr_type": 0
+       },
+       "ts_bd": false
+      }
+     },
+     "hs_h4": {
+      "sdef_ps": {
+       "ps_sb_i": false,
+       "ps_sa_i": false,
+       "ps_sa": 0,
+       "ps_sb": 0
+      },
+      "sdef_ts": {
+       "ts_bd_i": true,
+       "ts_fgc2_i": false,
+       "ts_fgc2": {
+        "hclr_color": "<7 chars>",
+        "clr_type": 0
+       },
+       "ts_bd": false
+      }
+     }
+    }
+   },
+   {
+    "ty": "as",
+    "st": "language",
+    "si": 0,
+    "ei": 0,
+    "sm": {
+     "lgs_l": "<2 chars>"
+    }
+   }
+  ],
+  "null": [
+   {
+    "ty": "null"
+   }
+  ],
+  "is": [
+   {
+    "ty": "is",
+    "ibi": 0,
+    "s": "<624 chars>"
+   },
+   {
+    "ty": "is",
+    "ibi": 0,
+    "s": "<716 chars>"
+   },
+   {
+    "ty": "is",
+    "ibi": 0,
+    "s": "<745 chars>"
+   }
+  ],
+  "mkch": [
+   {
+    "ty": "mkch",
+    "d": [
+     [
+      0,
+      "<5 chars>"
+     ]
+    ]
+   }
+  ],
+  "ac": [
+   {
+    "ty": "ac",
+    "d": [
+     "t.<id>",
+     [
+      0,
+      "<5 chars>"
+     ],
+     [
+      0
+     ]
+    ]
+   },
+   {
+    "ty": "ac",
+    "d": [
+     "t.<id>",
+     [
+      0,
+      "<5 chars>"
+     ],
+     [
+      0
+     ]
+    ]
+   }
+  ],
+  "nm": [
+   {
+    "ty": "nm",
+    "nmr": [
+     "<3 chars>",
+     "t.<id>"
+    ],
+    "nmc": {
+     "ty": "as",
+     "st": "text",
+     "si": 0,
+     "ei": 0,
+     "sm": {
+      "ts_ff_i": true,
+      "ts_un_i": true,
+      "ts_bgc2_i": true,
+      "ts_bd_i": true,
+      "ts_va_i": true,
+      "ts_it_i": true,
+      "ts_sc_i": true,
+      "ts_fgc2_i": true,
+      "ts_st_i": true,
+      "ts_fs_i": true
+     }
+    }
+   },
+   {
+    "ty": "nm",
+    "nmr": [
+     "<3 chars>",
+     "t.<id>"
+    ],
+    "nmc": {
+     "ty": "as",
+     "st": "paragraph",
+     "si": 0,
+     "ei": 0,
+     "sm": {
+      "ps_awao_i": true,
+      "ps_klt_i": true,
+      "ps_sm_i": true,
+      "ps_ls_i": true,
+      "ps_il_i": true,
+      "ps_ir_i": true,
+      "ps_al_i": true,
+      "ps_bl_i": true,
+      "ps_sd_i": true,
+      "ps_sb_i": true,
+      "ps_sa_i": true,
+      "ps_lslm_i": true,
+      "ps_br_i": true,
+      "ps_bbtw_i": true,
+      "ps_bt_i": true,
+      "ps_kwn_i": true,
+      "ps_bb_i": true,
+      "ps_ifl_i": true,
+      "ps_pbb_i": true
+     }
+    }
+   },
+   {
+    "ty": "nm",
+    "nmr": [
+     "<3 chars>",
+     "t.<id>"
+    ],
+    "nmc": {
+     "ty": "as",
+     "st": "document",
+     "si": 0,
+     "ei": 0,
+     "sm": {
+      "ds_fpo": false,
+      "ds_pw": 0,
+      "ds_mt": 0,
+      "ds_lhs": 0,
+      "ds_mr": 0,
+      "ds_mb": 0,
+      "ds_df": {
+       "df_dm": 0
+      },
+      "ds_ulhfl": false,
+      "ds_ml": 0,
+      "ds_b": {
+       "bg_c2": {
+        "hclr_color": "<7 chars>",
+        "clr_type": 0
+       }
+      },
+      "ds_ph": 0,
+      "ds_pnsi": 0
+     }
+    }
+   }
+  ]
+ },
+ "indicators": [
+  {
+   "id": "bulk",
+   "status": "flag"
+  },
+  {
+   "id": "speed",
+   "status": "info"
+  },
+  {
+   "id": "linearity",
+   "status": "info"
+  },
+  {
+   "id": "delayed",
+   "status": "info"
+  },
+  {
+   "id": "pauses",
+   "status": "insufficient"
+  },
+  {
+   "id": "intervals",
+   "status": "insufficient"
+  },
+  {
+   "id": "burstiness",
+   "status": "insufficient"
+  },
+  {
+   "id": "stationarity",
+   "status": "info"
+  },
+  {
+   "id": "typos",
+   "status": "insufficient"
+  },
+  {
+   "id": "formatting",
+   "status": "ok"
+  },
+  {
+   "id": "sessions",
+   "status": "info"
+  },
+  {
+   "id": "letterpairs",
+   "status": "insufficient"
+  },
+  {
+   "id": "labels",
+   "status": "ok"
+  }
+ ]
+}

@@ -21,7 +21,9 @@
     if (u.origin !== 'https://docs.google.com') return false;
     var base = '/document/d/' + docId + '/';
     if (u.pathname === base + 'revisions/tiles' || u.pathname === base + 'revisions/load') return true;
-    if (u.pathname === base + 'export' && u.searchParams.get('format') === 'txt') return true;
+    var txt = u.searchParams.get('format') === 'txt';
+    if (txt && (u.pathname === base + 'export' || /^\/document\/u\/\d+\/d\/[A-Za-z0-9_-]+\/export$/.test(u.pathname) && u.pathname.indexOf('/d/' + docId + '/') > 0)) return true;
+    if (txt && u.pathname === '/document/export' && u.searchParams.get('id') === docId) return true;
     return false;
   }
 
@@ -64,7 +66,7 @@
       });
     } else if (msg.type === 'docinsight:fetch') {
       if (!allowed(msg.url)) { reply({ type: 'docinsight:fetched', id: msg.id, error: 'refused' }); return; }
-      fetch(msg.url, { credentials: 'include', headers: { 'x-same-domain': '1' }, cache: 'no-store' })
+      fetch(msg.url, { credentials: 'include', headers: msg.plain ? {} : { 'x-same-domain': '1' }, cache: 'no-store' })
         .then(function (r) { return r.text().then(function (text) { reply({ type: 'docinsight:fetched', id: msg.id, status: r.status, text: text }); }); })
         .catch(function (e) { reply({ type: 'docinsight:fetched', id: msg.id, error: String(e && e.message || e) }); });
     } else if (msg.type === 'docinsight:close') {

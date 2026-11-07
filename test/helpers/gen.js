@@ -104,7 +104,9 @@ export class DocGen {
     this.cur = text.length;
     return this.push({ ty: 'rvrt', snapshot: [[{ ty: 'is', ibi: 1, s: text }]] });
   }
-  addTab(id, title) { this.wait(500); this.push({ ty: 'ac', id, cpm: { title } }); return this.inTab(id); }
+  addTab(id, title) { this.wait(500); this.push({ ty: 'ac', d: [id, [1, title], [this.text.size]] }); return this.inTab(id); }
+  // Turns the document into tabs, naming the first one, as Docs records it.
+  nameFirstTab(title) { this.wait(300); return this.push({ ty: 'mkch', d: [[1, title]] }); }
   gemini(s, at = this.cur) {
     this.wait(1500);
     return this.insertRaw(s, at, [

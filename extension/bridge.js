@@ -32,8 +32,8 @@ function ask(payload, timeoutMs) {
 export const getContext = () => ask({ type: 'docinsight:hello' }, 8000);
 
 // fetchText for loadHistory: same-origin GET through the content script, with the teacher's own session.
-export async function fetchText(url) {
-  const r = await ask({ type: 'docinsight:fetch', url }, 120000);
+export async function fetchText(url, opts = {}) {
+  const r = await ask({ type: 'docinsight:fetch', url, plain: !!opts.plain }, 120000);
   if (r.error) throw new Error(r.error);
   return { status: r.status, text: r.text };
 }

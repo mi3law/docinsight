@@ -6,7 +6,7 @@
 import { mulberry32 } from './random.js';
 
 const LEFT = 'qwertasdfgzxcvb', RIGHT = 'yuiophjklnm';
-const KEEP_KEYS = new Set(['ty', 'st']);
+const KEEP_KEYS = new Set(['ty', 'st', 'et']);
 const TAB_ID_RE = /^t\.[A-Za-z0-9_-]+$/;
 
 function shuffle(s, rand) {

@@ -6,14 +6,15 @@ import { docIdFromLink, tilesUrl, loadUrl, parseGoogleJson, readTiles } from '..
 
 // The school's Internal OAuth client, the one CensorSearch uses (public, not a secret).
 const CLIENT_ID = '640659635830-rthmbg5fvne57fgv39rk508q62qm6hgp.apps.googleusercontent.com';
+// Narrowest first. Round 1 (7 November 2026): all four worked, but Google adds earlier grants to each new token, so only
+// the first try (drive.readonly) was clean. Round 2 asks for each scope alone (include_granted_scopes: false).
 const SCOPES = [
-  ['drive.readonly', 'https://www.googleapis.com/auth/drive.readonly'],
-  ['documents.readonly', 'https://www.googleapis.com/auth/documents.readonly'],
   ['drive.file', 'https://www.googleapis.com/auth/drive.file'],
-  ['drive', 'https://www.googleapis.com/auth/drive'],
+  ['documents.readonly', 'https://www.googleapis.com/auth/documents.readonly'],
+  ['drive.readonly', 'https://www.googleapis.com/auth/drive.readonly'],
 ];
 const $ = id => document.getElementById(id);
-const results = { spike: 'bearer', version: 1, origin: location.origin, userAgent: navigator.userAgent, tries: [] };
+const results = { spike: 'bearer', version: 2, origin: location.origin, userAgent: navigator.userAgent, tries: [] };
 
 function loadGis() {
   return new Promise((resolve, reject) => {
@@ -30,10 +31,10 @@ function loadGis() {
 function token(scope) {
   return new Promise((resolve, reject) => {
     const client = google.accounts.oauth2.initTokenClient({
-      client_id: CLIENT_ID, scope,
+      client_id: CLIENT_ID, scope, include_granted_scopes: false,
       callback: r => {
         if (!r || r.error || !r.access_token) { reject(new Error((r && r.error) || 'no token')); return; }
-        resolve({ token: r.access_token, granted: google.accounts.oauth2.hasGrantedAllScopes(r, scope) });
+        resolve({ token: r.access_token, granted: google.accounts.oauth2.hasGrantedAllScopes(r, scope), scopes: String(r.scope || '').split(' ').map(x => x.replace('https://www.googleapis.com/auth/', '')) });
       },
       error_callback: e => reject(new Error((e && e.type) || 'sign-in failed')),
     });
@@ -62,6 +63,7 @@ async function run(name, scope) {
     const t = await token(scope);
     tok = t.token;
     entry.granted = t.granted;
+    entry.tokenScopes = t.scopes;
   } catch (e) {
     entry.signIn = String(e.message || e);
     results.tries.push(entry);

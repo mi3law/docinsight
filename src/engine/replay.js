@@ -180,7 +180,15 @@ class Model {
 const num = v => (typeof v === 'number' && Number.isFinite(v) ? v : (typeof v === 'string' && /^-?\d+$/.test(v) ? Number(v) : NaN));
 const isWordy = s => /\S/.test(s);
 
-// Finds a tab title in a tab-lifecycle op, wherever it sits.
+// The first [1, "title"] pair in a tab op's data.
+function findTitle(x, depth = 0) {
+  if (!Array.isArray(x) || depth > 3) return '';
+  if (x.length === 2 && x[0] === 1 && typeof x[1] === 'string') return x[1];
+  for (const y of x) { const t = findTitle(y, depth + 1); if (t) return t; }
+  return '';
+}
+
+// Finds a tab title in a tab-lifecycle op of an unknown shape, wherever it sits.
 function tabInfo(op) {
   const ids = [], titles = [];
   const walk = (x, key, depth) => {
@@ -242,7 +250,20 @@ export function replay(raw, settings) {
       if (si >= 1 && ei >= si) T.removeRange(si - 1, Math.min(ei, T.vis) - si + 1, -1);
     } else if (TAB_OPS.has(op.ty)) registerTab(op);
   }
+  // Tab lifecycle, as recorded on 7 November 2026: mkch {d: [[1, title of the first tab]]} turns the document into tabs;
+  // ac {d: [tabId, [1, title], [position]]} adds a tab; ucp renames, dc deletes, with the tab id first in d.
   function registerTab(op) {
+    const d = Array.isArray(op.d) ? op.d : null;
+    if (d) {
+      if (op.ty === 'mkch') { const t = findTitle(d); if (t) M.tab(DEFAULT_TAB).title = t; return; }
+      if (typeof d[0] === 'string' && TAB_ID_RE.test(d[0])) {
+        const T = M.tab(d[0]);
+        const t = findTitle(d.slice(1));
+        if (t && (op.ty === 'ucp' || !T.title)) T.title = t;
+        if (op.ty === 'dc') T.deleted = true;
+        return;
+      }
+    }
     const info = tabInfo(op);
     for (const id of info.ids) { const T = M.tab(id); if (info.title && !T.title) T.title = info.title; if (op.ty === 'dc') T.deleted = true; }
   }

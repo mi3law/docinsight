@@ -12,7 +12,7 @@ import { anonymiseHistory } from '../src/engine/anonymise.js';
 import { isDocInsightError } from '../src/engine/errors.js';
 
 const $ = id => document.getElementById(id);
-const SPIKE_VERSION = 1;
+const SPIKE_VERSION = 2;
 
 function el(tag, attrs, ...kids) {
   const e = document.createElement(tag);
@@ -67,21 +67,33 @@ async function main() {
   for (const tab of A.tabs) {
     const visibleIds = [...tab.seq].filter(id => A.chars.ins[id] <= A.entries.n - 1 && A.chars.del[id] > A.entries.n - 1);
     const objectAt = i => (A.chars.flag[visibleIds[i]] & CF.OBJECT) !== 0;
-    const tries = A.tabs.length === 1 ? [null, tab.id] : [tab.id];
-    let res = null, exportText = null, used = null, httpStatus = null;
-    for (const t of tries) {
+    // Round 1 answered HTTP 400 to /document/d/<id>/export?format=txt with x-same-domain; round 2 tries these forms.
+    const D = encodeURIComponent(ctx.docId), T = encodeURIComponent(tab.id);
+    const one = A.tabs.length === 1;
+    const variants = [
+      ...(one ? [['d/export, no extra header', `https://docs.google.com/document/d/${D}/export?format=txt`, true]] : []),
+      [`d/export&tab, no extra header`, `https://docs.google.com/document/d/${D}/export?format=txt&tab=${T}`, true],
+      ...(one ? [['d/export&id, no extra header', `https://docs.google.com/document/d/${D}/export?format=txt&id=${D}`, true]] : []),
+      ['export?id&tab, no extra header', `https://docs.google.com/document/export?format=txt&id=${D}&tab=${T}`, true],
+      ...(one ? [['export?id, no extra header', `https://docs.google.com/document/export?format=txt&id=${D}`, true]] : []),
+      ['d/export&tab, x-same-domain', exportTxtUrl(ctx.docId, tab.id), false],
+      ...(p.ouid ? [['d/export&tab&ouid, no extra header', `https://docs.google.com/document/d/${D}/export?format=txt&tab=${T}&ouid=${encodeURIComponent(p.ouid)}`, true]] : []),
+    ];
+    let res = null, exportText = null, used = null;
+    const attempts = [];
+    for (const [name, url, plain] of variants) {
       try {
-        const r = await fetchText(exportTxtUrl(ctx.docId, t));
-        httpStatus = r.status;
-        if (r.status !== 200) continue;
+        const r = await fetchText(url, { plain });
+        attempts.push({ name, status: r.status, bytes: r.text.length, looksHtml: /^\s*<(!doctype|html)/i.test(r.text) });
+        if (r.status !== 200 || /^\s*<(!doctype|html)/i.test(r.text)) continue;
         exportText = normalizeExport(r.text);
         res = compareTexts(tab.text, exportText, objectAt);
-        used = t || '(no tab parameter)';
-        if (res.exact) break;
-      } catch (e) { httpStatus = String(e.message || e); }
+        used = name;
+        break;
+      } catch (e) { attempts.push({ name, error: String(e.message || e) }); }
     }
     exportsForRecording[tab.id] = exportText;
-    tabResults.push({ tab, res, used, httpStatus, controls: controlInventory(tab.text), objects: visibleIds.filter(id => A.chars.flag[id] & CF.OBJECT).length });
+    tabResults.push({ tab, res, used, attempts, httpStatus: attempts.map(a => a.status || a.error).join(', '), objectAt, controls: controlInventory(tab.text), objects: visibleIds.filter(id => A.chars.flag[id] & CF.OBJECT).length });
   }
   prog.hidden = true;
   status.textContent = `Done: ${A.entries.n.toLocaleString('en')} entries read in ${(fetchMs / 1000).toFixed(1)} s, analysed in ${(analyseMs / 1000).toFixed(2)} s.`;
@@ -107,6 +119,7 @@ async function main() {
     t.res ? el('p', {}, 'Exact: ', yn(t.res.exact), ' · Apart from structure: ', yn(t.res.loose), ' · Letters only: ', yn(t.res.bare), ` · export ${t.res.exportLength.toLocaleString('en')} characters via ${t.used}`)
       : el('p', {}, el('span', { class: 'no' }, 'Export not read'), ` (${t.httpStatus})`),
     Object.keys(t.controls).length ? el('p', {}, 'Structure characters: ' + Object.entries(t.controls).map(([k, v]) => `${k} ×${v}`).join(', ') + (t.objects ? `; ${t.objects} object placeholder(s)` : '')) : null,
+    !t.res ? manualCompare(t) : null,
     t.res && t.res.firstDiff ? el('div', {}, el('p', {}, `First difference at character ${t.res.firstDiff.at} (only on your screen; not saved):`),
       el('div', { class: 'diff' }, 'Rebuilt:  ' + JSON.stringify(t.res.firstDiff.rebuilt)), el('div', { class: 'diff' }, 'Exported: ' + JSON.stringify(t.res.firstDiff.exported))) : null,
   )));
@@ -133,27 +146,57 @@ async function main() {
     history: { entries: raw.changelog.length, revCount: raw.revCount, startRev: raw.startRev, consolidated: raw.consolidated, tiles: raw.tiles.length, authors: A.users.length, fetchMs: Math.round(fetchMs), analyseMs: Math.round(analyseMs), snapshotShape: raw.snapshot ? shapeOf(raw.snapshot) : null },
     firstEntryAgeDays: raw.changelog.length ? Math.round((Date.now() - raw.changelog[0][1]) / 86400000) : null,
     opTypes: A.opTypes, styleTypes: A.styleTypes, anomalies: { drift: A.anomalies.drift, badEntries: A.anomalies.badEntries, badOps: A.anomalies.badOps, examples: A.anomalies.examples },
-    tabs: tabResults.map(t => ({
+    tabs: null,
+  };
+  const tabRows = () => tabResults.map(t => ({
       id: t.tab.id === 't.0' ? 't.0' : 't.other', titleFound: !!t.tab.title, length: t.tab.length, words: t.tab.words, controls: t.controls, objects: t.objects,
       exportVia: t.used, exportStatus: t.httpStatus,
       exact: t.res ? t.res.exact : null, loose: t.res ? t.res.loose : null, bare: t.res ? t.res.bare : null, exportLength: t.res ? t.res.exportLength : null,
       firstDiff: t.res && t.res.firstDiff ? { at: t.res.firstDiff.at, rebuiltShape: shape(t.res.firstDiff.rebuilt), exportedShape: shape(t.res.firstDiff.exported) } : null,
-    })),
+      attempts: t.attempts,
+    }));
+  Object.assign(report, {
     granularity: G,
     bulk: A.bulk.map(b => ({ chars: b.chars, words: b.words, kind: b.kind, ops: A.entries.opCount[b.entry] })),
     chunks: A.chunks.length, moves: A.moves.length, accepts: A.accepts.length, restores: A.restores.length,
     sampleShapes: sampleShapes(raw.changelog),
     indicators: A.indicators.map(x => ({ id: x.id, status: x.status })),
-  };
+    identity: {
+      ouidShape: p.ouid ? shape(p.ouid) : null,
+      authorIdShapes: A.users.map(u => shape(u.key)),
+      ouidIsAuthor: A.users.some(u => u.key === p.ouid),
+      matchingCandidateKeys: (p.idCandidates || []).filter(c => A.users.some(u => u.key === c.value)).map(c => c.key),
+      candidateKeys: (p.idCandidates || []).map(c => c.key),
+    },
+  });
   $('details').textContent = JSON.stringify({ opTypes: report.opTypes, styleTypes: report.styleTypes, anomalies: report.anomalies, page: report.page, history: report.history, sampleShapes: report.sampleShapes }, null, 1);
   $('results').hidden = false;
 
   const n = String(raw.changelog.length);
-  $('save-report').addEventListener('click', () => save(`docinsight-report-${n}.json`, report));
+  $('save-report').addEventListener('click', () => save(`docinsight-report-${n}.json`, Object.assign(report, { tabs: tabRows() })));
   $('save-recording').addEventListener('click', () => {
+    for (const t of tabResults) if (t.manualText != null && exportsForRecording[t.tab.id] == null) exportsForRecording[t.tab.id] = t.manualText;
+    report.tabs = tabRows();
     const rec = anonymiseHistory(raw, exportsForRecording, { keepText: $('keep-text').checked });
     save(`docinsight-recording-${n}.json`, Object.assign({ recordingVersion: 1, report }, rec));
   });
+}
+
+// When Google's export cannot be read from here: compare with a .txt the teacher downloads (File > Download > Plain text).
+function manualCompare(t) {
+  const input = el('input', { type: 'file', accept: '.txt,text/plain' });
+  const out = el('p', {});
+  input.addEventListener('change', async () => {
+    const f = input.files && input.files[0];
+    if (!f) return;
+    const text = normalizeExport(await f.text());
+    t.res = compareTexts(t.tab.text, text, t.objectAt);
+    t.used = 'downloaded file';
+    t.manualText = text;
+    out.replaceChildren('Exact: ', yn(t.res.exact), ' · Apart from structure: ', yn(t.res.loose), ' · Letters only: ', yn(t.res.bare),
+      t.res.firstDiff ? el('div', { class: 'diff' }, 'Rebuilt:  ' + JSON.stringify(t.res.firstDiff.rebuilt) + '\nDownloaded: ' + JSON.stringify(t.res.firstDiff.exported)) : '');
+  });
+  return el('div', {}, el('p', {}, 'Google\'s export could not be read from here. Download this tab yourself (in the Doc: File, Download, Plain text (.txt)) and choose the file: '), input, out);
 }
 
 // The structure of a value with every string reduced to its shape, for the report.
