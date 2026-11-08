@@ -172,6 +172,22 @@ export function startApp(root, opts) {
     window.scrollBy(0, docPanel.getBoundingClientRect().top - top);
   }
 
+  // Scrolling down over the document text first scrolls the page until the whole document box is in view, then the
+  // text inside it. (Until the warnings above the timeline have scrolled away, the bottom of the box sits below the
+  // window, and the text would otherwise take the wheel and leave it there.) Scrolling up is left to the browser.
+  function wheelDoc(ev) {
+    if (ev.ctrlKey || ev.deltaY <= 0 || Math.abs(ev.deltaX) > Math.abs(ev.deltaY)) return;
+    const root = document.scrollingElement || document.documentElement;
+    const hidden = Math.min(docPanel.getBoundingClientRect().bottom + 12 - window.innerHeight, root.scrollHeight - root.clientHeight - root.scrollTop);
+    if (hidden < 1) return;
+    ev.preventDefault();
+    const px = ev.deltaY * (ev.deltaMode === 1 ? 16 : ev.deltaMode === 2 ? window.innerHeight : 1);
+    const before = root.scrollTop;
+    window.scrollBy(0, Math.min(px, Math.ceil(hidden)));
+    const rest = px - (root.scrollTop - before);   // a wheel step larger than what was left goes on to the text
+    if (rest > 0) docHost.scrollTop += rest;
+  }
+
   // Shift+arrows move one burst, the brackets one session, whatever the zoom level.
   function moveBy(levelName, dir) {
     const E = st.A.entries;
@@ -232,6 +248,7 @@ export function startApp(root, opts) {
       A.tabs.map((t, i) => el('option', { value: i }, (t.title || `Tab ${i + 1}`) + ` (${fmtInt(t.words)} words)`))) : null;
     rangeNote = el('p', { class: 'range-note' });
     docHost = el('div', { class: 'doc-text', dir: 'auto', tabindex: '0', 'aria-label': 'The document at this step' });
+    docHost.addEventListener('wheel', wheelDoc, { passive: false });
     minimap = el('canvas', { class: 'minimap', 'aria-hidden': 'true', title: 'Origin of the text (click to scroll)' });
     minimap.addEventListener('click', ev => { const r = minimap.getBoundingClientRect(); docHost.scrollTop = ((ev.clientY - r.top) / r.height) * docHost.scrollHeight - docHost.clientHeight / 2; });
 
