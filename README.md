@@ -92,9 +92,11 @@ Students can revoke your access or delete their Doc after grading, so the record
   reads, with your own access. The sign-in lasts about an hour and is kept only in the open tab.
 
 Sign-in uses the school's Internal Google sign-in client, the one CensorSearch uses (so Google's sign-in window says
-"CensorSearch"); only school accounts can sign in. To give DocInsight a client of its own, follow CensorSearch's
+"CensorSearch"); only school accounts can sign in. Since 20 October 2026 the Google Cloud console requires two-step
+verification, which the school's Google admin must first allow for the organisation; until then no new client can be
+made. To give DocInsight a client of its own (in a new Cloud project named DocInsight, so the window says so), follow CensorSearch's
 "Signing in" steps (an Internal client, with `https://mi3law.github.io` as an Authorized JavaScript origin; no API needs
-enabling), then put its client ID in [web/config.js](web/config.js). If Google refuses the permission for the school's
+enabling), then put its client ID in [web/config.js](web/config.js) (the sign-in test page reads it from there too). If Google refuses the permission for the school's
 project, add the `…/auth/drive.readonly` scope under **Data Access** in the project's Google Auth Platform settings.
 
 ## Privacy

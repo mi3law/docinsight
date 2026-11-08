@@ -3,9 +3,10 @@
 // revisions.list). Records statuses and sizes only; the token stays in memory and is never shown or stored.
 
 import { docIdFromLink, tilesUrl, loadUrl, parseGoogleJson, readTiles } from '../src/engine/fetch.js';
+import { CONFIG } from '../web/config.js';
 
-// The school's Internal OAuth client, the one CensorSearch uses (public, not a secret).
-const CLIENT_ID = '640659635830-rthmbg5fvne57fgv39rk508q62qm6hgp.apps.googleusercontent.com';
+// The same Internal OAuth client as the web page (web/config.js), so a new client is changed in one place.
+const CLIENT_ID = CONFIG.googleClientId;
 // Narrowest first. Round 1 (7 November 2026): all four worked, but Google adds earlier grants to each new token, so only
 // the first try (drive.readonly) was clean. Round 2 asks for each scope alone (include_granted_scopes: false).
 const SCOPES = [
