@@ -13,6 +13,7 @@
   var docId = m[1];
   var extOrigin = new URL(chrome.runtime.getURL('')).origin;
   var overlay = null, frame = null, button = null;
+  var REOPEN = 'docinsight:reopen';
 
   // --- Allowed requests: this document's revisions/tiles, revisions/load and plain-text export, nothing else. ---
   function allowed(url) {
@@ -72,7 +73,9 @@
     } else if (msg.type === 'docinsight:close') {
       close();
     } else if (msg.type === 'docinsight:reload-page') {
-      // DocInsight is about to reload itself after an update; reload the Doc after it, to load the new version here.
+      // DocInsight is about to reload itself after an update; reload the Doc after it, to load the new version here,
+      // and open DocInsight again once the Doc is back.
+      try { sessionStorage.setItem(REOPEN, String(Date.now())); } catch (e) { /* storage blocked: the teacher reopens it */ }
       setTimeout(function () { location.reload(); }, 600);
     }
   });
@@ -105,6 +108,13 @@
     if (overlay && e.key === 'Escape') { e.preventDefault(); close(); }
   }, true);
 
+  // After an update reloaded the Doc (within the last minute), open DocInsight again on the new version.
+  function reopenAfterUpdate() {
+    var at = 0;
+    try { at = Number(sessionStorage.getItem(REOPEN)) || 0; sessionStorage.removeItem(REOPEN); } catch (e) { return; }
+    if (at && Date.now() - at >= 0 && Date.now() - at < 60000) open('overlay');
+  }
+
   // --- The button: in Docs' title bar when we can find it, else floating in the corner. ---
   function makeButton() {
     var b = document.createElement('button');
@@ -130,7 +140,9 @@
     return false;
   }
 
-  if (!place()) {
+  if (place()) {
+    reopenAfterUpdate();
+  } else {
     var tries = 0;
     var timer = setInterval(function () {
       tries++;
@@ -143,6 +155,7 @@
           button.style.zIndex = '2147482000';
           document.documentElement.appendChild(button);
         }
+        reopenAfterUpdate();
       }
     }, 500);
   }

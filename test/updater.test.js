@@ -8,7 +8,7 @@ import { mkdtempSync, mkdirSync, writeFileSync, readFileSync, existsSync, statSy
 import { createHash } from 'node:crypto';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
-import { isNewer } from '../extension/update.js';
+import { isNewer, shouldReload, folderUpdate, checkForUpdate, reloadDocInsight } from '../extension/update.js';
 
 const ROOT = resolve(import.meta.dirname, '..');
 const HOST = join(ROOT, 'updater/host-mac.sh');
@@ -62,6 +62,76 @@ test('isNewer compares dotted versions part by part', () => {
   assert.equal(isNewer('1.0', '1.0.0'), false);
   assert.equal(isNewer('1.0.1', '1.0'), true);
   assert.equal(isNewer('0.10.0', '0.10.0'), false);
+});
+
+test('shouldReload: when the folder holds another version, once per pair within two minutes', () => {
+  const now = 1_800_000_000_000;
+  assert.equal(shouldReload('0.12.0', '0.13.0', null, now), true);
+  assert.equal(shouldReload('0.13.0', '0.12.0', null, now), true, 'an older folder too: Chrome should run what the folder holds');
+  assert.equal(shouldReload('0.13.0', '0.13.0', null, now), false);
+  assert.equal(shouldReload('0.12.0', null, null, now), false, 'folder unreadable');
+  const tried = { from: '0.12.0', to: '0.13.0', at: now - 30e3 };
+  assert.equal(shouldReload('0.12.0', '0.13.0', tried, now), false, 'the same reload just failed: no loop');
+  assert.equal(shouldReload('0.12.0', '0.13.0', { ...tried, at: now - 3 * 60e3 }, now), true, 'tried again after two minutes');
+  assert.equal(shouldReload('0.12.0', '0.13.1', tried, now), true, 'a newer folder version is tried at once');
+  assert.equal(shouldReload('0.12.0', '0.13.0', { ...tried, at: now + 60e3 }, now), true, 'a note from the future (clock change) is ignored');
+});
+
+// A stand-in for the extension APIs update.js uses: the running manifest, the folder's manifest (served by fetch) and
+// chrome.storage.local.
+function fakeChrome({ running, inFolder, github, stored = {} }) {
+  const store = { ...stored };
+  const requests = [];
+  globalThis.chrome = {
+    runtime: { getManifest: () => ({ version: running }), getURL: p => 'chrome-extension://id/' + p },
+    storage: { local: { get: async k => (k in store ? { [k]: store[k] } : {}), set: async o => { Object.assign(store, o); } } },
+  };
+  globalThis.fetch = async url => {
+    requests.push(String(url));
+    const v = String(url).startsWith('chrome-extension://') ? inFolder : github;
+    if (v instanceof Error) throw v;
+    return { ok: v != null, json: async () => ({ name: 'DocInsight', version: v }) };
+  };
+  return { store, requests };
+}
+
+test('folderUpdate reloads to the folder\'s version once, and notes it first', async t => {
+  const realFetch = globalThis.fetch;
+  t.after(() => { globalThis.fetch = realFetch; delete globalThis.chrome; });
+  const f = fakeChrome({ running: '0.12.0', inFolder: '0.13.0' });
+  const up = await folderUpdate();
+  assert.deepEqual(up, { from: '0.12.0', to: '0.13.0' });
+  assert.equal(f.store.autoReload.to, '0.13.0');
+  assert.deepEqual(f.requests, ['chrome-extension://id/manifest.json']);
+  assert.equal(await folderUpdate(), null, 'the reload did not take: the second opening does not reload again');
+
+  fakeChrome({ running: '0.13.0', inFolder: '0.13.0' });
+  assert.equal(await folderUpdate(), null);
+  fakeChrome({ running: '0.13.0', inFolder: new TypeError('Failed to fetch') });
+  assert.equal(await folderUpdate(), null);
+});
+
+test('checkForUpdate asks GitHub again after ten minutes, not twelve hours', async t => {
+  const realFetch = globalThis.fetch;
+  t.after(() => { globalThis.fetch = realFetch; delete globalThis.chrome; });
+  const fresh = fakeChrome({ running: '0.12.0', github: '0.12.2', stored: { updateCheck: { at: Date.now() - 5 * 60e3, latest: '0.12.0' } } });
+  assert.deepEqual(await checkForUpdate(), { current: '0.12.0', latest: '0.12.0', available: false });
+  assert.equal(fresh.requests.length, 0, 'a five-minute-old answer is used');
+  const stale = fakeChrome({ running: '0.12.0', github: '0.12.2', stored: { updateCheck: { at: Date.now() - 11 * 60e3, latest: '0.10.0' } } });
+  assert.deepEqual(await checkForUpdate(), { current: '0.12.0', latest: '0.12.2', available: true });
+  assert.equal(stale.requests.length, 1);
+  assert.equal(stale.store.updateCheck.latest, '0.12.2');
+  const offline = fakeChrome({ running: '0.12.0', github: new TypeError('Failed to fetch'), stored: { updateCheck: { at: Date.now() - 60 * 60e3, latest: '0.12.1' } } });
+  assert.equal((await checkForUpdate()).available, true, 'offline: the last answer still counts');
+  assert.equal(offline.requests.length, 1);
+});
+
+test('reloadDocInsight asks the Doc to reload, then reloads the extension', async () => {
+  const order = [];
+  reloadDocInsight(() => order.push('page'), () => order.push('extension'));
+  assert.deepEqual(order, ['page']);
+  await new Promise(r => setTimeout(r, 200));
+  assert.deepEqual(order, ['page', 'extension']);
 });
 
 test('the helper scripts are executable', () => {
