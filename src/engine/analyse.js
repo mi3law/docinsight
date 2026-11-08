@@ -6,6 +6,7 @@ import { replay, textAt, NONE, CF, EF } from './replay.js';
 import { normalizeSettings, changedSettings } from './settings.js';
 import { countWords, median, sum } from './stats.js';
 import { runIndicators } from './indicators.js';
+import { findPlaceholders } from './placeholders.js';
 
 export const ENGINE_VERSION = 1;
 
@@ -206,6 +207,8 @@ export function analyse(raw, settingsIn = {}, context = {}) {
     newText: r.newText, bulk, chunks, moves, accepts, restores, suggestions,
     stats, granularity, levels, defaultLevel, warnings, anomalies: r.anomalies, opTypes: r.opTypes, styleTypes: r.styleTypes,
   };
+  A.placeholders = findPlaceholders(A, CF.PLACEHOLDER);
+  for (const b of bulk.concat(chunks)) b.placeholders = A.placeholders.filter(f => f.entry === b.entry);
   A.indicators = runIndicators(A, context.references || null);
   A.summary = summarySentence(A);
   return A;
@@ -340,6 +343,8 @@ export function summarySentence(A) {
   else parts.push('No single edit inserted a large amount of text at once.');
   if (ng) parts.push(`${ng} insertion${ng === 1 ? '' : 's'} carry the signature of Gemini in Docs.`);
   if (s.baselineShare > 0) parts.push(`${pct(s.baselineShare)} of the final text was already present at the start of the history.`);
+  const ph = A.indicators.find(x => x.id === 'placeholders');
+  if (ph && ph.status === 'look') parts.push(`Fill-in placeholders or Markdown marks (such as [Your Name] or **bold** typed out) arrived in the writer's bulk insertions or chunks: ${ph.findings.filter(f => f.author === A.writer && (f.source === KIND.BULK || f.source === KIND.CHUNK || f.source === KIND.GEMINI)).length}.`);
   const flagged = A.indicators.filter(x => x.tier === 'indicator' && (x.status === 'flag' || x.status === 'look'));
   if (flagged.length) parts.push(`Indicators worth a look: ${flagged.map(x => x.title.toLowerCase()).join(', ')}.`);
   parts.push('This describes the writing process as Google Docs recorded it; it does not say who wrote the text or how.');

@@ -111,6 +111,10 @@ h3 { font-size: 13px; margin: 14px 0 6px; color: var(--muted); text-transform: u
 .o1 { background: var(--o1); } .o2 { background: var(--o2); text-decoration: underline dotted var(--flag); } .o3 { background: var(--o3); font-style: italic; }
 .o4 { background: var(--o4); text-decoration: underline wavy #6250d6; } .o5 { background: var(--o5); } .o6 { background: var(--o6); }
 .moved { box-shadow: inset 0 -2px 0 var(--muted); }
+.ph { outline: 1.5px dashed #c2410c; outline-offset: 1px; border-radius: 2px; }
+.tag.ph-tag { background: #fde7d9; color: #8a2e06; }
+.bulk-item .ph-text { font-family: var(--mono); font-size: 13px; }
+.bulk-list.small .bulk-item.ph-item { border-left-color: #c2410c; }
 .a0 { background: var(--a0); } .a1 { background: var(--a1); } .a2 { background: var(--a2); } .a3 { background: var(--a3); }
 .a4 { background: var(--a4); } .a5 { background: var(--a5); } .a6 { background: var(--a6); } .a7 { background: var(--a7); } .abase { color: var(--muted); font-style: italic; }
 /* Age: one hue, light (oldest) to dark (newest). */

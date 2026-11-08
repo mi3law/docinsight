@@ -12,7 +12,7 @@ export const MODES = [
   { id: 'author', key: '4', label: 'Author' },
 ];
 const AGE_BUCKETS = 10;
-const OBJECT = 4, MOVED = 16, SUGGDEL = 2;
+const OBJECT = 4, MOVED = 16, SUGGDEL = 2, PLACEHOLDER = 32;
 export const AUTHOR_PALETTE = ['#3b6fd6', '#d35400', '#16a085', '#8e44ad', '#c0392b', '#2c3e50', '#7f8c00', '#b03a7a'];
 
 export function authorColor(A, u) {
@@ -69,6 +69,7 @@ export function renderDocument(host, A, opts) {
       title = author < 0 ? 'baseline text' : A.users[author].name;
     }
     if (C.flag[id] & SUGGDEL) key += ' sdel';
+    if (C.flag[id] & PLACEHOLDER) { key += ' ph'; title = (title ? title + ' · ' : '') + 'placeholder or Markdown mark'; }
     if (key !== runKey || title !== runTitle) { flush(); runKey = key; runTitle = title; }
     const c = C.code[id];
     if (c === 10) { endBlock(); continue; }

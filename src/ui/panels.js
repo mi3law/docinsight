@@ -71,7 +71,8 @@ export function bulkPanel(A, jump, open) {
     items.length ? el('ol', { class: 'bulk-list' }, items.map(b => el('li', {},
       el('button', { type: 'button', class: 'bulk-item', on: { click: () => jump(b.entry) } },
         el('span', { class: 'when' }, fmtDateTime(b.t)),
-        el('span', { class: 'size' }, `${fmtInt(b.words)} words · ${fmtInt(b.chars)} characters`, b.kind === KIND_GEMINI ? el('span', { class: 'tag gemini' }, 'Gemini-like') : null),
+        el('span', { class: 'size' }, `${fmtInt(b.words)} words · ${fmtInt(b.chars)} characters`, b.kind === KIND_GEMINI ? el('span', { class: 'tag gemini' }, 'Gemini-like') : null,
+          b.placeholders && b.placeholders.length ? el('span', { class: 'tag ph-tag', title: b.placeholders.map(f => f.text).join('  ') }, b.placeholders.length === 1 ? '1 placeholder or Markdown mark' : `${b.placeholders.length} placeholders or Markdown marks`) : null),
         el('span', { class: 'share' }, `${fmtPct(b.shareOfFinal)} of the final text still from it`),
         el('span', { class: 'first-line' }, '“' + (b.firstLine || '…') + '”'))))) : el('p', { class: 'muted' }, 'No single edit inserted ' + A.settings.bulkChars + ' or more characters.'),
     items.length ? el('details', { class: 'causes' }, el('summary', {}, 'Legitimate causes of a large single insertion'), causesList()) : null,
@@ -84,7 +85,7 @@ export function bulkPanel(A, jump, open) {
 
 export const causesList = () => el('ul', { class: 'causes-list' }, CAUSES.map(([c, how]) => el('li', {}, el('strong', {}, c), ': ', how)));
 
-export function indicatorsPanel(A, open) {
+export function indicatorsPanel(A, open, jump) {
   const groups = [
     ['Facts', A.indicators.filter(x => x.tier === 'fact')],
     ['Indicators', A.indicators.filter(x => x.tier === 'indicator' && !x.experimental)],
@@ -96,11 +97,11 @@ export function indicatorsPanel(A, open) {
     el('p', { class: 'muted' }, 'Each indicator shows its data, its rule and its known false positives. They are never combined into one score; the conclusion is yours.'),
     groups.filter(g => g[1].length).map(([title, list]) => el('div', { class: 'ind-group' },
       el('h3', {}, title, title.startsWith('Experimental') ? defLink('experimental', open) : null),
-      list.map(x => indicatorCard(x, open)))),
+      list.map(x => indicatorCard(x, open, jump)))),
   );
 }
 
-function indicatorCard(x, open) {
+function indicatorCard(x, open, jump) {
   const st = STATUS[x.status] || STATUS.info;
   return el('details', { class: 'ind ' + st.cls },
     el('summary', {}, el('span', { class: 'chip ' + st.cls }, el('span', { 'aria-hidden': 'true' }, st.icon + ' '), st.label), ' ', el('strong', {}, x.title), x.experimental ? el('span', { class: 'tag' }, 'experimental') : null,
@@ -108,6 +109,7 @@ function indicatorCard(x, open) {
     el('table', { class: 'values' }, x.values.map(v => el('tr', {}, el('th', {}, v.label), el('td', {}, v.value)))),
     x.chart && x.chart.kind === 'histogram' ? histogram(x.chart) : null,
     x.chart && x.chart.kind === 'series' && x.chart.values.length > 1 ? series(x.chart) : null,
+    x.findings && x.findings.length ? findingsList(x.findings, jump) : null,
     el('p', {}, el('strong', {}, 'Rule: '), x.rule),
     el('p', {}, el('strong', {}, 'Strength: '), x.strength),
     el('p', {}, el('strong', {}, 'Known false positives: '), x.falsePositives),
@@ -144,6 +146,15 @@ function lineChart(values, label, fmt, opts = {}) {
     root.append(c);
   });
   return root;
+}
+
+// Placeholders and Markdown marks, each with where it came from and what became of it; click to go to the edit.
+function findingsList(F, jump) {
+  return el('ol', { class: 'bulk-list small findings' }, F.slice(0, 100).map(f => el('li', {},
+    el('button', { type: 'button', class: 'bulk-item ph-item', disabled: !jump || f.entry < 0, on: { click: () => jump && f.entry >= 0 && jump(f.entry) } },
+      el('span', { class: 'first-line ph-text' }, f.text),
+      el('span', { class: 'size' }, `${f.kind === 'placeholder' ? 'Placeholder' : 'Markdown mark'} in ${f.sourceName}${f.entry >= 0 ? ' by ' + f.authorName + ', ' + fmtDateTime(f.t) : ''}`),
+      el('span', { class: 'share' }, f.inFinal === 'yes' ? 'Still in the final text' : f.inFinal === 'partly' ? 'Partly still in the final text' : `Removed ${f.removedT ? fmtDateTime(f.removedT) : 'later'}`)))));
 }
 
 export function authorsPanel(A, open, actions) {

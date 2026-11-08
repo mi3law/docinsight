@@ -12,7 +12,10 @@ export function sampleHistory(seed = 5) {
   }
   g.type('\n', { gapMs: 300 });
   g.wait(35 * 60000).session('sessB');
-  g.paste(prose(140, seed + 2) + '\n');
+  const pasted = 'By [Your Name]\n**Main argument**\n' + prose(140, seed + 2) + '\n';
+  const at = g.body.length;
+  g.paste(pasted);
+  g.wait(90000).deleteRange(at + 3, at + 13).insertRaw('Sam', at + 3);
   g.cur = 40;
   g.type(' (an important point)', { gapMs: 260 });
   g.cur = g.body.length;

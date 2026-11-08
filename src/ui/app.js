@@ -200,7 +200,7 @@ export function startApp(root, opts) {
       rangeNote,
       el('div', { class: 'doc-wrap' }, docHost, minimap));
     const side = el('aside', { class: 'side' },
-      summaryPanel(A, openDef), bulkPanel(A, e => goToEntry(e, { mode: 'change' }), openDef), indicatorsPanel(A, openDef),
+      summaryPanel(A, openDef), bulkPanel(A, e => goToEntry(e, { mode: 'change' }), openDef), indicatorsPanel(A, openDef, e => goToEntry(e, { mode: 'change' })),
       authorsPanel(A, openDef, store.setMe ? { setMe } : null), chartsPanel(A, openDef));
     body.replaceChildren(...[warningsBanner(A), el('div', { class: 'layout' }, el('div', { class: 'main-col' }, timeline, docPanel), side)].filter(Boolean));
     update(true);

@@ -66,6 +66,42 @@ export function runIndicators(A, references) {
     }));
   }
 
+  // 1b. Placeholders and Markdown marks (fact).
+  {
+    const F = A.placeholders || [];
+    const SOURCE = ['typed', 'a chunk', 'a bulk insertion', 'baseline text', 'a Gemini-like insertion', 'a suggestion', 'a restored version'];
+    const fromInsertion = F.filter(f => f.author === W && (f.source === KIND.BULK || f.source === KIND.CHUNK || f.source === KIND.GEMINI));
+    const ph = F.filter(f => f.kind === 'placeholder'), md = F.filter(f => f.kind === 'markdown');
+    const removed = F.filter(f => f.inFinal === 'no').length, still = F.filter(f => f.inFinal !== 'no').length;
+    const list = arr => [...new Set(arr.map(f => '“' + (f.text.length > 40 ? f.text.slice(0, 39) + '…' : f.text) + '”'))].slice(0, 4).join(', ');
+    let headline;
+    if (!F.length) headline = 'No fill-in placeholders or Markdown marks anywhere in the history.';
+    else {
+      const parts = [];
+      if (ph.length) parts.push(`${ph.length} fill-in placeholder${ph.length === 1 ? '' : 's'} (${list(ph)})`);
+      if (md.length) parts.push(`${md.length} Markdown mark${md.length === 1 ? '' : 's'} (${list(md)})`);
+      headline = parts.join(' and ') + (fromInsertion.length ? `; ${fromInsertion.length} arrived in the writer's bulk insertions or chunks` : '; none arrived in the writer\'s bulk insertions or chunks')
+        + `. ${still} still in the final text, ${removed} removed later.`;
+    }
+    out.push(ind({
+      id: 'placeholders', tier: 'fact', title: 'Placeholders and Markdown marks', def: 'placeholders',
+      status: fromInsertion.length ? 'look' : F.length ? 'info' : 'ok',
+      headline,
+      values: [
+        { label: 'Fill-in placeholders, such as [Your Name]', value: int(ph.length) },
+        { label: 'Markdown marks, such as **bold** or ## Heading', value: int(md.length) },
+        { label: "In the writer's bulk insertions or chunks", value: int(fromInsertion.length) },
+        { label: 'Typed, in baseline text, or by another account', value: int(F.length - fromInsertion.length) },
+        { label: 'Still in the final text', value: int(still) },
+        { label: 'Removed later (the history keeps them)', value: int(removed) },
+      ],
+      findings: F.map(f => Object.assign({}, f, { sourceName: SOURCE[f.source] || 'an edit', authorName: f.author >= 0 && A.users[f.author] ? A.users[f.author].name : 'baseline text' })),
+      rule: 'Every edit\'s inserted text, and the final text, are searched for fill-in placeholders (an instruction such as "insert" or "your", or a field such as name, date, class or teacher, in square, curly or angle brackets, or in **double asterisks**) and for Markdown typed out as characters (**bold**, a line starting with #, a line of ---, [text](link)). Worth a look when one arrived in a bulk insertion or chunk by the writer. Text deleted later is still found.',
+      strength: 'A fact about the text, not about who wrote it: such marks are common in text copied from a template or a chat assistant, and they are easy to remove, so their absence means nothing.',
+      falsePositives: 'A template the teacher handed out (shown as baseline text); the student\'s own reminders such as [add a quote here]; notes brought in from an app that writes Markdown (Notion, Obsidian, some phone notes apps); essays that quote code or Markdown.',
+    }));
+  }
+
   // 2. Typing speed (context only).
   {
     const wpm = st.fastestMinuteWpm;

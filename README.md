@@ -63,6 +63,12 @@ student's own draft pasted in, voice typing, Gemini in Docs, a template or a cop
 Smaller insertions (40 to 149 characters) are listed as **chunks**, never flagged. Text cut and pasted within the
 document keeps its identity and is not counted.
 
+**Placeholders and Markdown marks** are also listed: fill-in fields such as `[Your Name]` or `**Your Name**`, and
+formatting written out as characters, such as `**bold**` or `## Heading`. Both are common in text copied from a template
+or a chat assistant. DocInsight finds them even if the student deleted them later, and outlines them in the document
+view. They are a fact about the text, not about who wrote it: your own template, or a student's `[add a quote here]`
+reminder, shows up too, and is labelled as such.
+
 The **indicators** (linearity, delayed revision, typing speed, session structure, formatting order, and the
 experimental typing-rhythm ones) each show their data, their rule, their strength and their known false positives.
 They are never combined into one score, and there is no "AI probability". Rhythm indicators need Google to have stored

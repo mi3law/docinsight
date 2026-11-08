@@ -13,7 +13,7 @@ export const NONE = 0x7fffffff;           // "not deleted" / "no cursor yet"
 export const DEFAULT_TAB = 't.0';
 
 // Character flags.
-export const CF = Object.freeze({ SUGG: 1, SUGGDEL: 2, OBJECT: 4, RESTORED: 8, MOVED: 16 });
+export const CF = Object.freeze({ SUGG: 1, SUGGDEL: 2, OBJECT: 4, RESTORED: 8, MOVED: 16, PLACEHOLDER: 32 });
 // Entry flags.
 export const EF = Object.freeze({
   MOVE: 1, ACCEPT: 2, GEMINI: 4, RESTORE: 8, SUGGEST: 16, STYLE: 32, TAB: 64, DRIFT: 128, OBJECT: 256, TEXT: 512, SPELL: 1024,
@@ -156,6 +156,7 @@ class Model {
   constructor() {
     this.code = new Grow(Uint16Array); this.ins = new Grow(Int32Array); this.src = new Grow(Int32Array);
     this.del = new Grow(Int32Array); this.flag = new Grow(Uint8Array);
+    this.next = new Grow(Int32Array);   // for a character moved or re-inserted unchanged: the id of its new copy, else -1
     this.tabs = new Map(); this.order = [];
   }
   tab(id) {
@@ -170,6 +171,8 @@ class Model {
       this.ins.push(entry);
       this.src.push(srcIds && srcIds[i] != null ? this.src.a[srcIds[i]] : entry);
       this.del.push(NONE);
+      this.next.push(-1);
+      if (srcIds && srcIds[i] != null) this.next.a[srcIds[i]] = id;
       this.flag.push((flag | (srcIds && srcIds[i] != null ? CF.MOVED | (this.flag.a[srcIds[i]] & CF.RESTORED) : 0)) & 0xff);
       ids[i] = id;
     }
@@ -445,7 +448,7 @@ export function replay(raw, settings) {
     return { id, title: T.title, deleted: T.deleted, seq: T.all(), length: T.vis };
   });
   return {
-    chars: { n: M.code.n, code: M.code.view(), ins: M.ins.view(), src: M.src.view(), del: M.del.view(), flag: M.flag.view() },
+    chars: { n: M.code.n, code: M.code.view(), ins: M.ins.view(), src: M.src.view(), del: M.del.view(), flag: M.flag.view(), next: M.next.view() },
     tabs, entries: E, users, sessionIds: sids, newText, anomalies,
     opTypes: Object.fromEntries([...types.entries()].sort((a, b) => b[1] - a[1])),
     styleTypes: Object.fromEntries(styleTypes),

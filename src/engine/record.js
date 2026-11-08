@@ -163,6 +163,13 @@ figure{margin:8px 0}figure svg{width:100%;height:auto;border:1px solid #e3e6ee}f
   } else h += `<p>No single edit inserted ${A.settings.bulkChars} or more characters.</p>`;
   if (A.chunks.length) h += `<p>${A.chunks.length} chunk${A.chunks.length === 1 ? '' : 's'} of ${A.settings.chunkChars} to ${A.settings.bulkChars - 1} characters were also recorded; they are listed in DocInsight, not flagged.</p>`;
 
+  const F = (A.indicators.find(x => x.id === 'placeholders') || {}).findings || [];
+  if (F.length) {
+    h += `<h2>Placeholders and Markdown marks</h2><p>Fill-in placeholders (such as [Your Name]) and Markdown typed out as characters (such as **bold** or ## Heading) found in what each edit inserted, including text deleted later. They are common in text copied from a template or a chat assistant; they say nothing about who wrote the text, and the legitimate causes are listed under Definitions.</p>`;
+    h += `<table><tr><th>Text</th><th>Kind</th><th>Arrived</th><th>Now</th></tr>` + F.slice(0, 200).map(f =>
+      `<tr><td><code>${esc(f.text)}</code></td><td>${f.kind === 'placeholder' ? 'placeholder' : 'Markdown mark'}</td><td>in ${esc(f.sourceName)}${f.entry >= 0 ? ' by ' + esc(f.authorName) + ', ' + esc(when(f.t)) : ''}</td><td>${f.inFinal === 'yes' ? 'still in the final text' : f.inFinal === 'partly' ? 'partly still in the final text' : 'removed ' + esc(when(f.removedT))}</td></tr>`).join('') + '</table>';
+  }
+
   h += `<h2>Statistics</h2><table>` + [
     ['Sessions', `${int(s.sessions)} (a gap of more than ${A.settings.sessionGapMin} minutes starts a new one), over ${int(s.calendarDays)} calendar day${s.calendarDays === 1 ? '' : 's'}`],
     ['Active writing time', dur(s.activeMs)],
