@@ -36,7 +36,12 @@ h3 { font-size: 13px; margin: 14px 0 6px; color: var(--muted); text-transform: u
 .brand { display: flex; align-items: center; gap: 8px; font-weight: 700; color: var(--accent); white-space: nowrap; }
 .logo { width: 22px; height: 22px; border-radius: 6px; background: url("../../assets/icon-48.png") center / cover; }
 .doc-title { font-size: 16px; font-weight: 600; flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.header-buttons { display: flex; gap: 6px; flex-wrap: wrap; }
+.header-buttons { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+/* The beta notice (src/ui/version.js): quiet text before the header buttons, and the strip on the web page's home. */
+.beta-notice a { color: inherit; text-decoration: underline dotted; text-underline-offset: 2px; }
+.beta-notice a:hover { color: var(--accent); text-decoration-style: solid; }
+.header-buttons .beta-notice { margin-right: 6px; font-size: 12px; color: var(--muted); white-space: nowrap; }
+.beta-tag { display: inline-block; padding: 0 6px; border: 1px solid currentColor; border-radius: 999px; font-size: 10px; font-weight: 700; line-height: 15px; letter-spacing: .06em; text-transform: uppercase; vertical-align: 1px; }
 .btn { border: 1px solid var(--line-2); background: var(--surface); border-radius: 6px; padding: 6px 12px; cursor: pointer; }
 .btn:hover { border-color: var(--accent); }
 .btn.primary { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }

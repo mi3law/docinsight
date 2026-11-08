@@ -7,6 +7,7 @@ import { renderTimeline } from './timeline.js';
 import { renderDocument, renderMinimap, MODES, authorColor } from './docview.js';
 import { summaryPanel, bulkPanel, indicatorsPanel, authorsPanel, chartsPanel, warningsBanner, defLink } from './panels.js';
 import { analyseAsync } from './analysis.js';
+import { versionNotice } from './version.js';
 import { groupSteps, stepBars, pickLevel, LEVELS, MAX_BARS, BIG_HISTORY } from '../engine/analyse.js';
 import { normalizeSettings, DEFAULTS, LABELS } from '../engine/settings.js';
 import { definitions } from '../engine/definitions.js';
@@ -58,6 +59,7 @@ export function startApp(root, opts) {
 
   function setHeader() {
     headerButtons.replaceChildren(...[
+      st.version ? versionNotice(st.version, { newTab: true }) : null,
       actions.update ? button('Update available', actions.update, 'update', 'A newer DocInsight is on GitHub') : null,
       st.A ? button('Export record', openExport, 'primary') : null,
       st.A ? button('Settings', openSettings) : null,
@@ -402,5 +404,6 @@ export function startApp(root, opts) {
   if (opts.raw) st.raw = opts.raw;
   load();
   // refreshHeader: for an action that arrives later (the extension's update notice sets actions.update).
-  return { state: st, refreshHeader: setHeader };
+  // setVersion({ version, commit }): the beta notice beside the header buttons (src/ui/version.js).
+  return { state: st, refreshHeader: setHeader, setVersion: info => { st.version = info; setHeader(); } };
 }

@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self' https://accounts.google.com/gsi/client; style-src 'self' https://accounts.google.com/gsi/style; img-src 'self' data:; connect-src 'self' https://docs.google.com https://accounts.google.com/gsi/; frame-src https://accounts.google.com/gsi/; worker-src 'self'; base-uri 'none'; form-action 'none'">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self' https://accounts.google.com/gsi/client; style-src 'self' https://accounts.google.com/gsi/style; img-src 'self' data:; connect-src 'self' https://docs.google.com https://accounts.google.com/gsi/ https://api.github.com; frame-src https://accounts.google.com/gsi/; worker-src 'self'; base-uri 'none'; form-action 'none'">
   <meta name="referrer" content="strict-origin">
   <title>DocInsight</title>
   <meta name="description" content="See how a Google Doc was written: paste its link, or get the DocInsight extension for Chrome. Everything stays in your browser.">
@@ -16,6 +16,7 @@
 <body>
   <div id="app">
     <div class="home" id="home">
+      <p class="beta-bar" id="beta-bar"><span class="beta-notice"><span class="beta-tag">Beta</span></span></p>
       <header class="top">
         <h1 class="wordmark"><img src="assets/uas-globe-white.webp" alt="" width="36" height="36">DocInsight</h1>
         <details class="help">
@@ -34,7 +35,7 @@
 
         <form id="link-form" class="search" novalidate>
           <label for="link" class="question">Check a Google Doc</label>
-          <p id="link-hint" class="search-hint">Paste the link of a Doc you can edit to see how it was written: what was typed, when, and when large amounts of text arrived at once.</p>
+          <p id="link-hint" class="search-hint">Paste the link of a Doc you can edit to see how it was written-- what was typed, when, and whether large amounts of text arrived at once.</p>
           <div class="link-bar">
             <input id="link" class="search-box" type="text" inputmode="url" placeholder="https://docs.google.com/document/d/…" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" enterkeyhint="go" aria-describedby="link-hint">
             <button type="submit" class="go">Check</button>
