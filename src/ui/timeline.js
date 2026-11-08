@@ -51,7 +51,7 @@ export function layout(bars, axis, width, collapseMs) {
 }
 
 // state: { bars, cur (bar index), rangeFrom (bar index or null), axis, level }
-// A: the analysis. handlers: { select(i, shift), zoom(i, j) }
+// A: the analysis. handlers: { press(), select(i, shift), zoom(i, j) }
 export function renderTimeline(host, A, state, handlers) {
   const bars = state.bars;
   const width = Math.max(320, host.clientWidth || 900);
@@ -124,7 +124,12 @@ export function renderTimeline(host, A, state, handlers) {
     for (let i = 0; i < L.xs.length; i++) { if (px >= L.xs[i] - 2) best = i; else break; }
     return Math.max(0, best);
   };
-  root.addEventListener('pointerdown', ev => { down = { x: ev.clientX, i: barAt(ev) }; root.setPointerCapture(ev.pointerId); });
+  // A press first stops playback (handlers.press), so the timeline is not redrawn under the pointer before it is released.
+  root.addEventListener('pointerdown', ev => {
+    down = { x: ev.clientX, i: barAt(ev) };
+    root.setPointerCapture(ev.pointerId);
+    if (handlers.press) handlers.press();
+  });
   root.addEventListener('pointerup', ev => {
     if (!down) return;
     const j = barAt(ev);
