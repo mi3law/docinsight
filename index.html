@@ -6,7 +6,7 @@
   <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self' https://accounts.google.com/gsi/client; style-src 'self' https://accounts.google.com/gsi/style; img-src 'self' data:; connect-src 'self' https://docs.google.com https://accounts.google.com/gsi/; frame-src https://accounts.google.com/gsi/; worker-src 'self'; base-uri 'none'; form-action 'none'">
   <meta name="referrer" content="strict-origin">
   <title>DocInsight</title>
-  <meta name="description" content="See how a Google Doc was written: open a DocInsight record, or check one Doc by its link. Everything stays in your browser.">
+  <meta name="description" content="See how a Google Doc was written: paste its link, or get the DocInsight extension for Chrome. Everything stays in your browser.">
   <link rel="icon" type="image/png" sizes="32x32" href="assets/icon-32.png">
   <link rel="apple-touch-icon" href="assets/icon-180.png">
   <link rel="stylesheet" href="src/ui/ui.css">
@@ -15,38 +15,69 @@
 </head>
 <body>
   <div id="app">
-    <header class="app-header"><div class="brand"><span class="logo" aria-hidden="true"></span>DocInsight</div></header>
-    <main class="landing">
-      <p class="lede">See how a Google Doc was written: a timeline of its revision history, the moments when large amounts of text arrived at once, and the writing-process indicators behind them. Nothing leaves your browser.</p>
-      <noscript><p class="warn strong">DocInsight needs JavaScript.</p></noscript>
-      <div class="cards">
-        <section class="panel card" aria-labelledby="h-open">
-          <h2 id="h-open">Open a record</h2>
-          <p>A record exported from the DocInsight extension (<code>.html</code> or <code>.json</code>). No sign-in needed.</p>
+    <div class="home" id="home">
+      <header class="top">
+        <h1 class="wordmark"><img src="assets/uas-globe-white.webp" alt="" width="36" height="36">DocInsight</h1>
+        <details class="help">
+          <summary>Help</summary>
+          <ul class="help-panel">
+            <li>You need <strong>edit</strong> access to see a Doc's history. Ask students to share their Docs with you as an editor.</li>
+            <li>The first check asks you to sign in with your school Google account. Google's window may say "CensorSearch": DocInsight shares the school's sign-in with it.</li>
+            <li>The sign-in lasts about an hour and is kept only in this tab.</li>
+            <li>DocInsight shows how a Doc was written. It does not judge whether text "is AI".</li>
+          </ul>
+        </details>
+      </header>
+
+      <main class="page">
+        <noscript><p class="noscript">DocInsight needs JavaScript. Turn JavaScript on for this page.</p></noscript>
+
+        <form id="link-form" class="search" novalidate>
+          <label for="link" class="question">Check a Google Doc</label>
+          <p id="link-hint" class="search-hint">Paste the link of a Doc you can edit to see how it was written: what was typed, when, and when large amounts of text arrived at once.</p>
+          <div class="link-bar">
+            <input id="link" class="search-box" type="text" inputmode="url" placeholder="https://docs.google.com/document/d/…" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" enterkeyhint="go" aria-describedby="link-hint">
+            <button type="submit" class="go">Check</button>
+          </div>
+        </form>
+        <p id="link-status" class="warning" role="alert"></p>
+        <p class="signin-line"><span id="signin-status" aria-live="polite">The first check asks you to sign in with your school Google account.</span> <button type="button" id="switch" class="text-button" hidden>Switch account</button></p>
+
+        <section class="get-ext" aria-labelledby="h-ext">
+          <h2 id="h-ext">Use it on every Doc</h2>
+          <p class="get-ext-lede">Get the Chrome extension: it adds a DocInsight button to every Google Doc you open. No sign-in, no links to paste.</p>
+          <p><a id="download" class="download" href="https://github.com/mi3law/docinsight/archive/refs/heads/main.zip"><svg viewBox="0 0 18 18" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 2v10M4.5 7.5 9 12l4.5-4.5M3 16h12"/></svg>Download the extension</a></p>
+          <ol class="steps">
+            <li>Unzip the download and keep the folder somewhere it will stay, such as Documents.</li>
+            <li>In Chrome, open <code class="addr">chrome://extensions</code> <button type="button" id="copy-addr" class="copy">Copy</button> and turn on <strong>Developer mode</strong>, top right.</li>
+            <li>Click <strong>Load unpacked</strong> and choose the unzipped folder.</li>
+            <li>Open any Google Doc. A blue <strong>DocInsight</strong> button appears beside Share.</li>
+          </ol>
+          <p class="get-ext-note">DocInsight isn't in the Chrome Web Store, which is why Chrome loads it this way. It only runs on Google Docs.</p>
+        </section>
+
+        <details id="record" class="record">
+          <summary>Open a record</summary>
+          <p>A record exported from DocInsight (<code>.html</code> or <code>.json</code>), such as one a colleague sent you. No sign-in needed.</p>
           <label class="drop" id="drop">
             <input type="file" id="file" accept=".html,.htm,.json,text/html,application/json">
             <span>Choose a record, or drop it here</span>
           </label>
-          <p id="open-status" class="muted" aria-live="polite"></p>
-        </section>
-        <section class="panel card" aria-labelledby="h-link">
-          <h2 id="h-link">Check one Doc by its link</h2>
-          <p>Sign in with your school Google account, then paste the link of a Doc you can <strong>edit</strong>. DocInsight reads its revision history with your own access, the same full history the extension reads.</p>
-          <p><button type="button" class="btn" id="signin">Sign in with Google</button> <span id="signin-status" class="muted" aria-live="polite"></span></p>
-          <form id="link-form" class="link-form">
-            <label for="link">Doc link</label>
-            <input id="link" type="url" placeholder="https://docs.google.com/document/d/…/edit" autocomplete="off" spellcheck="false" required>
-            <button type="submit" class="btn primary">Check</button>
-          </form>
-          <p id="link-status" class="muted" aria-live="polite"></p>
-        </section>
-      </div>
-      <section class="panel about">
-        <h2>About</h2>
-        <p>For regular use, install the DocInsight extension: it adds a button to every Google Doc you open and needs no sign-in. See the <a id="readme" href="https://github.com/mi3law/docinsight#readme">install guide</a>.</p>
-        <p>DocInsight shows evidence of the writing process. It does not judge whether text "is AI", and it sends nothing anywhere: no server of its own, no analytics, no copies kept. With sign-in, Google gives this page a token that can read your Drive files for about an hour; the page uses it only to read the history of the Doc you name, keeps it in this tab, and never stores or shows it.</p>
-      </section>
-    </main>
+          <p id="open-status" class="record-status" aria-live="polite"></p>
+        </details>
+      </main>
+
+      <footer class="foot">
+        <p class="privacy">Nothing leaves your browser: no server, no analytics, no copies kept.</p>
+        <details class="about">
+          <summary>About DocInsight</summary>
+          <p>DocInsight shows evidence of the writing process: a timeline of a Doc's revision history, the moments when large amounts of text arrived at once, and the indicators behind them. A large insertion is a fact to see and discuss with the student; where it came from is for you to find out.</p>
+          <p>When you check a Doc by its link, Google gives this page a token that can read your Drive files for about an hour. The page uses it only to read the history of the Doc you name, keeps it in this tab, and never stores or shows it.</p>
+          <p class="foot-links"><a id="repo" href="https://github.com/mi3law/docinsight">Source code</a></p>
+        </details>
+        <p class="school"><img src="assets/uas-logo-white.webp" alt="The Universal American School, Kuwait. Celebrating 50 years, 1976 to 2026." width="1400" height="240"></p>
+      </footer>
+    </div>
   </div>
 </body>
 </html>

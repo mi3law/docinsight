@@ -1,14 +1,252 @@
-/* The web page's landing view; the analysis itself uses src/ui/ui.css. */
-.landing { max-width: 1000px; margin: 0 auto; padding: 20px 16px 48px; }
-.lede { font-size: 16px; max-width: 70ch; }
-.cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 14px; margin: 16px 0; }
-.card h2, .about h2 { font-size: 17px; margin-bottom: 6px; }
-.drop { display: flex; align-items: center; justify-content: center; min-height: 110px; border: 2px dashed var(--line-2); border-radius: 8px; padding: 12px; text-align: center; cursor: pointer; color: var(--muted); }
-.drop.over { border-color: var(--accent); background: color-mix(in srgb, var(--accent) 8%, transparent); }
+/* The web page's home view, in CensorSearch's look: the school's blue (the globe's #233e82), white words, and the
+   50th-badge gold for links and focus. Everything is scoped to .home, so the analysis view (src/ui/ui.css) keeps its own
+   light and dark schemes once a Doc or record opens. */
+
+.home {
+  --bg: #233e82;
+  --ink: #f4f6fb;
+  --muted: #c9d2ea;
+  --line: #3d5699;
+  --edge: #a3b0d6;
+  --surface: #2c4a94;
+  --strip: #3a5aa6;
+  --link: #ffd98a;
+  --link-visited: #e0c4f0;
+  --focus: #ffd98a;
+  --warn-bg: #3b2d12;
+  --warn-fg: #ffe2a8;
+  --warn-edge: #b88a35;
+  min-height: 100vh;
+  background: var(--bg);
+  color: var(--ink);
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif;
+  font-size: 1.0625rem;
+  line-height: 1.5;
+}
+/* The page behind the home view is the same blue (no light strip when the page bounces), and form controls are dark. */
+:root:has(.home) { color-scheme: dark; background: #233e82; }
+:root:has(.home) body { background: #233e82; }
+
+.home [hidden] { display: none !important; }
+.home a { color: var(--link); text-underline-offset: 2px; }
+.home a:visited { color: var(--link-visited); }
+.home code { font-family: var(--mono); font-size: .875em; }
+.home summary { cursor: pointer; }
+.home button { font: inherit; cursor: pointer; }
+
+.top, .page, .foot { max-width: 40rem; margin: 0 auto; padding: 0 16px; }
+
+/* ---- Top bar: the school's globe and the name, and Help (its panel opens under the bar) ---- */
+.top { padding-top: 8px; }
+.wordmark {
+  float: left;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 44px;
+  margin: 0;
+  font-size: .9375rem;
+  font-weight: 700;
+  letter-spacing: .04em;
+}
+.wordmark img { display: block; width: 36px; height: 36px; }
+.help > summary {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: fit-content;
+  min-height: 44px;
+  margin-left: auto;
+  padding-left: 12px;
+  list-style: none;
+  font-size: .9375rem;
+  font-weight: 600;
+}
+.help > summary::-webkit-details-marker { display: none; }
+.help > summary::before {
+  content: "?";
+  width: 22px;
+  height: 22px;
+  border: 2px solid var(--edge);
+  border-radius: 50%;
+  font-size: .8125rem;
+  line-height: 18px;
+  font-weight: 700;
+  text-align: center;
+}
+.help[open] > summary::before { background: var(--ink); border-color: var(--ink); color: var(--bg); }
+.help-panel {
+  clear: both;
+  margin: 4px 0 0;
+  padding: 16px 16px 16px 36px;
+  background: var(--surface);
+  border-radius: 12px;
+  font-size: .9375rem;
+}
+.help-panel li + li { margin-top: 8px; }
+
+/* ---- The page: one column ---- */
+.page { padding-top: 24px; }
+.noscript, .warning {
+  margin: 16px 0 0;
+  padding: 12px 16px;
+  background: var(--warn-bg);
+  color: var(--warn-fg);
+  border: 2px solid var(--warn-edge);
+  border-radius: 12px;
+  overflow-wrap: anywhere;
+}
+.noscript { margin: 0 0 24px; }
+.warning:empty { display: none; }
+
+/* The main feature: one instruction and one bar */
+.search { margin: 0; }
+.question {
+  display: block;
+  font-size: clamp(1.75rem, 7.5vw, 2.5rem);
+  line-height: 1.1;
+  font-weight: 800;
+  letter-spacing: -.01em;
+}
+.search-hint { margin: 8px 0 12px; color: var(--muted); }
+.link-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  padding: 6px;
+  background: var(--bg);
+  border: 2px solid var(--edge);
+  border-radius: 12px;
+}
+.link-bar:focus-within { outline: 3px solid var(--focus); outline-offset: 2px; }
+.search-box {
+  flex: 1 1 12rem;
+  min-width: 0;
+  min-height: 48px;
+  padding: 8px 10px;
+  font-size: 1.125rem;
+  color: var(--ink);
+  background: transparent;
+  border: 0;
+  border-radius: 6px;
+}
+.search-box::placeholder { color: var(--muted); opacity: .75; }
+.search-box:focus-visible { outline: none; }   /* the bar draws the ring */
+.go {
+  flex: 0 0 auto;
+  min-height: 48px;
+  padding: 0 20px;
+  font-weight: 700;
+  color: var(--bg);
+  background: var(--ink);
+  border: 2px solid var(--ink);
+  border-radius: 8px;
+}
+.go:hover { background: #ffffff; }
+.go:disabled { opacity: .6; cursor: default; }
+.signin-line { margin: 12px 0 0; font-size: .9375rem; color: var(--muted); }
+.text-button {
+  min-height: 32px;
+  padding: 0 2px;
+  color: var(--link);
+  background: none;
+  border: 0;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  font-size: inherit;
+}
+
+/* Second: the extension, as one sign */
+.get-ext {
+  margin: 48px 0 0;
+  padding: 20px 16px;
+  background: var(--surface);
+  border-radius: 12px;
+}
+.get-ext h2 { margin: 0; font-size: 1.25rem; line-height: 1.25; font-weight: 700; color: var(--ink); text-transform: none; letter-spacing: 0; }
+.get-ext-lede { margin: 4px 0 16px; }
+.home .download, .home .download:visited {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 48px;
+  padding: 10px 24px;
+  color: var(--ink);
+  background: var(--bg);
+  border: 2px solid var(--edge);
+  border-radius: 999px;
+  font-weight: 700;
+  text-decoration: none;
+}
+.download svg { flex: none; width: 18px; height: 18px; }
+.download:hover { border-color: var(--ink); }
+.steps { margin: 16px 0 0; padding-left: 1.4rem; }
+.steps li { padding-left: 4px; }
+.steps li + li { margin-top: 8px; }
+.addr { padding: 1px 6px; background: var(--strip); border-radius: 4px; white-space: nowrap; }
+.copy {
+  min-height: 28px;
+  margin: 0 2px;
+  padding: 0 10px;
+  font-size: .8125rem;
+  font-weight: 600;
+  color: var(--ink);
+  background: none;
+  border: 1px solid var(--edge);
+  border-radius: 999px;
+  vertical-align: 1px;
+}
+.copy:hover { border-color: var(--ink); }
+.get-ext-note { margin: 16px 0 0; font-size: .875rem; color: var(--muted); }
+
+/* Third: Open a record, folded away until it is wanted */
+.record { margin: 32px 0 0; border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); }
+.record > summary { padding: 11px 0; font-weight: 600; }
+.record > p { margin: 0 0 12px; font-size: .9375rem; }
+.drop {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 110px;
+  margin: 0 0 12px;
+  padding: 12px;
+  border: 2px dashed var(--edge);
+  border-radius: 12px;
+  text-align: center;
+  color: var(--muted);
+  cursor: pointer;
+  position: relative;
+}
+.drop:hover, .drop.over { border-color: var(--ink); color: var(--ink); background: var(--surface); }
 .drop input { position: absolute; width: 1px; height: 1px; opacity: 0; }
 .drop:focus-within { outline: 3px solid var(--focus); outline-offset: 2px; }
-.link-form { display: grid; grid-template-columns: 1fr auto; gap: 6px 8px; align-items: center; }
-.link-form label { grid-column: 1 / -1; color: var(--muted); }
-.link-form input { padding: 7px 9px; border: 1px solid var(--line-2); border-radius: 6px; background: var(--surface); min-width: 0; }
-.about { margin-top: 8px; }
-code { font-family: var(--mono); font-size: 13px; }
+.record-status { color: var(--warn-fg); }
+.record-status:empty { display: none; }
+
+/* ---- Small print: privacy, About, the school ---- */
+.foot { padding-top: 32px; padding-bottom: 40px; font-size: .8125rem; color: var(--muted); }
+.privacy { margin: 0; }
+.about { font-size: .9375rem; }
+.about > summary { padding: 11px 0; }
+.about > p { margin: 0 0 8px; }
+.foot-links { margin: 0; }
+.foot-links a { display: inline-flex; align-items: center; min-height: 44px; }
+.school { margin: 40px 0 0; padding-top: 24px; border-top: 1px solid var(--line); }
+.school img { display: block; width: 100%; max-width: 26rem; height: auto; margin: 0 auto; }
+
+/* ---- Wider screens: the same single column with more air ---- */
+@media (min-width: 600px) {
+  .top, .page, .foot { padding-left: 24px; padding-right: 24px; }
+  .page { padding-top: 64px; }
+  .search-hint { margin-bottom: 16px; }
+  .search-box { min-height: 56px; font-size: 1.25rem; }
+  .go { min-height: 56px; padding: 0 28px; }
+  .get-ext { margin-top: 64px; padding: 24px; }
+}
+
+/* High-contrast mode drops backgrounds: the bar, the sign and the drop zone keep an outline. */
+@media (forced-colors: active) {
+  .get-ext { border: 2px solid CanvasText; }
+  .go, .download { border-color: ButtonText; }
+}
