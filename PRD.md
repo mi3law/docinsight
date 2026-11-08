@@ -340,6 +340,7 @@ Still open:
 - ~~Whether a build step is needed.~~ Settled: no.
 - Whether Google's plain-text export can be read from the Doc page for the automatic text comparison (round 1: HTTP 400; round 2 tries other URL forms, and the diagnostics page accepts a downloaded .txt instead).
 - How Google batches ordinary typing (characters per entry): round 1's test Docs were built by pasting, so this waits for round 2 (a few minutes of typing in a test Doc) and then the first real documents. Until then the rhythm indicators decide per document from its own measurement.
+- Whether the rhythm indicators catch real auto-typers: decided 8 November 2026 to run the validation set in spike round 2 instead of later. The teacher runs two or three public auto-typers (open-source ones first) on throwaway Docs in a separate Chrome profile with a personal account, at a plain setting and a "human-like" one; the recordings become test fixtures, and the experimental caveat comes off only the rules that flag the plain runs without flagging the teacher's own typing (steps in `spike/README.md`).
 - Which page value identifies the signed-in teacher in the change log: `info_params.ouid` is not the changelog's author id. Round 2 lists the page's id-like values that match an author; meanwhile "This is my account" is remembered.
 - The exact write path for the baseline sheet (Sheets API from the web app or the extension, or an Apps Script endpoint): settled in the v1.1 spike.
 
