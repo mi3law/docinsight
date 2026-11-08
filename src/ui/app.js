@@ -211,7 +211,7 @@ export function startApp(root, opts) {
     setHeader();
     titleEl.textContent = st.context.title || A.meta.title || 'Untitled document';
     tlHost = el('div', { class: 'tl-host tl-full', tabindex: '-1' });
-    scrub = el('input', { type: 'range', min: 0, max: Math.max(0, st.bars.length - 1), value: st.cur, class: 'scrubber tl-full', 'aria-label': 'Step', on: { input: () => { st.cur = Number(scrub.value); st.rangeFrom = null; update(true); } } });
+    scrub = el('input', { type: 'range', min: 0, max: Math.max(0, st.bars.length - 1), value: st.cur, class: 'scrubber tl-full', 'aria-label': 'Step', on: { pointerdown: pause, input: () => { pause(); st.cur = Number(scrub.value); st.rangeFrom = null; update(true); } } });
     stepInfo = el('p', { class: 'step-info', 'aria-live': 'polite' });
     levelSelect = el('select', { class: 'tl-full', 'aria-label': 'Zoom level', on: { change: () => { st.level = levelSelect.value; const e = st.bars[st.cur].b; regroup(); st.cur = barOfEntry(e); update(true); } } },
       ['auto', ...LEVELS].map(L => el('option', { value: L }, LEVEL_NAMES[L])));
@@ -221,7 +221,6 @@ export function startApp(root, opts) {
     zoomInBtn = iconButton('plus', 'Zoom in', zoomIn, '', 'Zoom in around this step (+)');
     const zoomPair = el('div', { class: 'btn-pair tl-full', role: 'group', 'aria-label': 'Zoom' }, zoomOutBtn, zoomInBtn);
     playBtn = iconButton('play', 'Play', togglePlay);
-    showPlaying();
     const speedSel = el('select', { 'aria-label': 'Play speed', on: { change: e => { st.speed = Number(e.target.value); if (st.playing) { togglePlay(); togglePlay(); } } } }, SPEEDS.map(s => el('option', { value: s, selected: s === st.speed }, `${s} steps/s`)));
     const legend = el('div', { class: 'legend tl-full' }, [0, 1, 2, 3, 4, 5, 6, 7].map(k => el('span', { class: 'key' }, el('i', { class: 'sw p-' + (KIND_STYLE[k].pattern || 'none'), style: `background-color:${KIND_STYLE[k].color}` }), KIND_STYLE[k].name)),
       el('span', { class: 'key' }, el('i', { class: 'sw flagmark' }), 'flag'), defLink('steps', openDef, 'steps'));
@@ -240,6 +239,7 @@ export function startApp(root, opts) {
       el('div', { class: 'tl-controls' }, el('h2', { id: 'h-tl' }, 'Timeline'), levelSelect, axisButtons, zoomPair, playBtn, speedSel,
         el('span', { class: 'hint tl-full' }, 'Drag across bars to zoom · Shift-click a second bar to see a range'), tlToggle),
       tlHost, scrub, stepInfo, legend);
+    showPlaying();
     // The timeline stays pinned under the header while the document and the side panels scroll beneath it.
     dock = el('div', { class: 'tl-dock' }, timeline);
     docWrap = el('div', { class: 'doc-wrap' }, docHost, minimap);
@@ -296,6 +296,7 @@ export function startApp(root, opts) {
     if (!bars.length) { body.querySelector('.main-col') && (stepInfo.textContent = 'No steps.'); return; }
     st.cur = Math.max(0, Math.min(bars.length - 1, st.cur));
     if (!st.tlHidden) renderTimeline(tlHost, A, { bars, cur: st.cur, rangeFrom: st.rangeFrom, axis: st.axis }, {
+      press: pause,
       select: (i, shift) => { if (shift) st.rangeFrom = st.rangeFrom == null ? st.cur : st.rangeFrom; else st.rangeFrom = null; st.cur = i; update(true); },
       zoom: (i, j) => { st.zoomStack.push(st.zoom); st.zoom = [bars[i].a, bars[j].b]; regroup(); st.cur = st.bars.length - 1; st.rangeFrom = null; update(true); },
     });
@@ -341,15 +342,25 @@ export function startApp(root, opts) {
     return A.users.map((u, i) => el('span', { class: 'key' }, el('span', { class: 'swatch', style: `background:${authorColor(A, i)}` }), u.name));
   }
 
+  // While playing, the button (showing Pause) and the timeline panel are coloured, so playback is plain at a glance.
   function showPlaying() {
     const label = st.playing ? 'Pause' : 'Play';
     playBtn.replaceChildren(icon(st.playing ? 'pause' : 'play'));
     playBtn.setAttribute('aria-label', label);
     playBtn.title = label + ' (Space)';
+    playBtn.classList.toggle('playing', !!st.playing);
+    timeline.classList.toggle('playing', !!st.playing);
+  }
+
+  function pause() {
+    if (!st.playing) return;
+    clearInterval(st.playing);
+    st.playing = null;
+    showPlaying();
   }
 
   function togglePlay() {
-    if (st.playing) { clearInterval(st.playing); st.playing = null; showPlaying(); return; }
+    if (st.playing) { pause(); return; }
     if (st.cur >= st.bars.length - 1) st.cur = 0;
     st.rangeFrom = null;
     st.playing = setInterval(() => {
