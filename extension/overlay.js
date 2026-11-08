@@ -5,6 +5,7 @@ import { getContext, fetchText, closeOverlay, embedded, reloadPageSoon } from '.
 import { loadHistory } from '../src/engine/fetch.js';
 import { DocInsightError } from '../src/engine/errors.js';
 import { checkForUpdate, openUpdateDialog } from './update.js';
+import { latestCommit } from '../src/ui/version.js';
 
 const root = document.getElementById('app');
 const popout = location.hash.startsWith('#popout');
@@ -26,6 +27,19 @@ async function offerUpdate(app, actions) {
   if (!info.available) return;
   actions.update = () => openUpdateDialog(info, { reloadPage: popout ? null : reloadPageSoon });
   app.refreshHeader();
+}
+
+// The beta notice beside the header buttons: this copy's version straight away, then GitHub's latest commit (the last
+// answer kept in chrome.storage.local for ten minutes).
+const commitCache = {
+  get: async () => (await chrome.storage.local.get('latestCommit')).latestCommit || null,
+  set: v => chrome.storage.local.set({ latestCommit: v }),
+};
+async function showVersion(app) {
+  const version = chrome.runtime.getManifest().version;
+  app.setVersion({ version, commit: null });
+  const commit = await latestCommit(commitCache);
+  if (commit) app.setVersion({ version, commit });
 }
 
 function popOut(raw, context) {
@@ -50,7 +64,9 @@ if (popout) {
       const { raw, context } = ev.data;
       document.title = 'DocInsight: ' + (context.title || 'document');
       const actions = {};
-      offerUpdate(startApp(root, { mode: 'popout', context, raw, load: async () => raw, store, actions }), actions);
+      const app = startApp(root, { mode: 'popout', context, raw, load: async () => raw, store, actions });
+      showVersion(app);
+      offerUpdate(app, actions);
     });
     opener.postMessage({ type: 'docinsight:popout-ready' }, location.origin);
   }
@@ -84,6 +100,7 @@ if (popout) {
       },
       actions,
     });
+    showVersion(app);
     offerUpdate(app, actions);
   }, e => { root.textContent = 'DocInsight could not talk to the Docs page (' + (e && e.message) + '). Reload the document and try again.'; });
 }

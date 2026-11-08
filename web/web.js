@@ -6,6 +6,7 @@ import { loadHistory, docIdFromLink } from '../src/engine/fetch.js';
 import { DocInsightError } from '../src/engine/errors.js';
 import { CONFIG } from './config.js';
 import { loadGis, createSignIn } from './signin.js';
+import { latestCommit, versionNotice } from '../src/ui/version.js';
 
 const $ = id => document.getElementById(id);
 const root = $('app');
@@ -22,18 +23,29 @@ const browserStore = { getSettings: async () => local.get('settings'), setSettin
 
 let signIn = null;
 
+// The beta notice: this site's version (its manifest.json, so the page and the extension share one number) and the
+// latest commit on GitHub. Asked once per page load; shown on the home page and beside the analysis view's buttons.
+const pageVersion = fetch('manifest.json', { cache: 'no-cache' }).then(r => r.json()).then(m => String(m.version || ''), () => '');
+const pageCommit = latestCommit({ get: () => local.get('latestCommit'), set: v => local.set('latestCommit', v) });
+const versionInfo = Promise.all([pageVersion, pageCommit]).then(([version, commit]) => ({ version, commit }));
+function fillBeta() {
+  const bar = $('beta-bar');
+  versionInfo.then(info => { if (bar.isConnected) bar.replaceChildren(versionNotice(info)); });
+}
+const showVersion = app => { versionInfo.then(info => app.setVersion(info)); return app; };
+
 function back() { history.pushState(null, '', location.pathname); root.innerHTML = landing; wire(); }
 
 function openRecord(rec) {
   // A record keeps the thresholds it was made with; changing them here applies to this view only.
   let settings = rec.settings;
-  startApp(root, {
+  showVersion(startApp(root, {
     mode: 'record',
     context: Object.assign({ timeZone }, rec.context, { title: rec.context.title }),
     notes: rec.notes, raw: rec.raw, load: async () => rec.raw,
     store: { getSettings: async () => settings, setSettings: async s => { settings = s; } },
     actions: { back },
-  });
+  }));
 }
 
 async function readFile(file, status) {
@@ -56,7 +68,7 @@ function checkLink(docId) {
   const token = signIn && signIn.token();
   if (!token) { $('link-status').textContent = 'Sign in with your school Google account first.'; return; }
   history.pushState(null, '', '?doc=' + encodeURIComponent(docId));
-  startApp(root, {
+  showVersion(startApp(root, {
     mode: 'web',
     context: { title: '', href: `https://docs.google.com/document/d/${docId}/edit`, docId, timeZone },
     store: browserStore,
@@ -66,10 +78,11 @@ function checkLink(docId) {
       return loadHistory({ fetchText: bearerFetch(t), docId, onProgress, signal });
     },
     actions: { back },
-  });
+  }));
 }
 
 function wire() {
+  fillBeta();
   // Open a record: folded away by default, but a record dropped anywhere on the page opens it too.
   const status = $('open-status');
   const record = $('record');

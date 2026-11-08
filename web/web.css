@@ -34,7 +34,21 @@
 .home summary { cursor: pointer; }
 .home button { font: inherit; cursor: pointer; }
 
-.top, .page, .foot { max-width: 40rem; margin: 0 auto; padding: 0 16px; }
+.top, .page, .foot, .beta-bar > .beta-notice { max-width: 40rem; margin: 0 auto; padding: 0 16px; }
+
+/* ---- The beta strip: one quiet line across the top, Beta under the wordmark's edge and the version and last update
+   under Help's (filled in by web.js from src/ui/version.js) ---- */
+.beta-bar {
+  margin: 0;
+  padding: 6px 0;
+  background: #1d3473;
+  border-bottom: 1px solid var(--line);
+  color: var(--muted);
+  font-size: .8125rem;
+}
+.beta-bar > .beta-notice { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 4px 12px; }
+.home .beta-notice a, .home .beta-notice a:visited { color: inherit; }
+.home .beta-notice a:hover { color: var(--link); }
 
 /* ---- Top bar: the school's globe and the name, and Help (its panel opens under the bar) ---- */
 .top { padding-top: 8px; }
@@ -237,7 +251,7 @@
 
 /* ---- Wider screens: the same single column with more air ---- */
 @media (min-width: 600px) {
-  .top, .page, .foot { padding-left: 24px; padding-right: 24px; }
+  .top, .page, .foot, .beta-bar > .beta-notice { padding-left: 24px; padding-right: 24px; }
   .page { padding-top: 64px; }
   .search-hint { margin-bottom: 16px; }
   .search-box { min-height: 56px; font-size: 1.25rem; }

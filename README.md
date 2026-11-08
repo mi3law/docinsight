@@ -140,7 +140,9 @@ author is you. The web page reads only the Doc you name, with a token that stays
 else, there are no analytics, and no copy of any document is kept. Exported records are files you save yourself.
 
 To check for updates, the extension reads the version number in this repository's `manifest.json` on GitHub, at most
-twice a day. That request carries nothing about you, your students or any document.
+twice a day. For the beta notice (the version and how long ago the latest change landed), the web page and the extension
+ask GitHub's API for this repository's latest commit, at most every ten minutes. Neither request carries anything about
+you, your students or any document.
 
 ## How it's built
 
@@ -156,7 +158,7 @@ No dependencies and no build step: vanilla JavaScript modules shared by the exte
 | [extension/update.js](extension/update.js) | The update check against GitHub and the **Update available** dialog. |
 | [updater/](updater/) | The optional Mac update helper: `setup-mac.sh` installs `host-mac.sh` as a Chrome native messaging host. |
 | [src/engine/](src/engine/) | Fetch layer (the only code that knows Google's endpoints), parser and character-identity text model, analysis, indicators, definitions, record export, anonymisation. Pure modules, run in a Web Worker. |
-| [src/ui/](src/ui/) | The interface: timeline, document view, panels, the app shell. |
+| [src/ui/](src/ui/) | The interface: timeline, document view, panels, the app shell, and the beta notice (`version.js`). |
 | [index.html](index.html), [web/](web/) | The web page: records and the one-link mode. |
 | [test/](test/) | `node:test` suites: the fetch layer against a mocked docs.google.com, the replay against synthetic changelogs, every indicator's rule and listed false positives, the record, performance, and recordings of the teacher's own test documents. |
 | [spike/](spike/) | Milestone 0: the sign-in test page and the spike's results. |
