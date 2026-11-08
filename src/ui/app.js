@@ -17,6 +17,11 @@ let activeKeys = null, activeResize = null;   // one interface per page: a new o
 const LEVEL_NAMES = { auto: 'Auto', session: 'Sessions', minute: 'Minutes', burst: 'Bursts', entry: 'Single entries' };
 const SPEEDS = [1, 3, 10, 30];
 
+// Whether the pinned timeline is hidden: a per-browser convenience, so it may not be remembered (private windows).
+const HIDE_KEY = 'docinsight:timeline-hidden';
+const readHidden = () => { try { return localStorage.getItem(HIDE_KEY) === '1'; } catch { return false; } };
+const saveHidden = v => { try { v ? localStorage.setItem(HIDE_KEY, '1') : localStorage.removeItem(HIDE_KEY); } catch { /* not remembered */ } };
+
 // opts: { mode: 'extension' | 'popout' | 'web' | 'record', context: { title, href, docId, teacherUid, timeZone },
 //   load({ onProgress, signal }) -> raw, notes, store: { getSettings, setSettings, getMe, setMe }, actions: { close, popOut, diagnostics, back } }
 export function startApp(root, opts) {
@@ -25,6 +30,7 @@ export function startApp(root, opts) {
   const st = {
     raw: null, A: null, settings: normalizeSettings({}), context: Object.assign({}, opts.context || {}), notes: opts.notes || '',
     tab: 0, mode: 'change', axis: 'step', level: 'auto', zoom: null, ends: null, bars: [], cur: 0, rangeFrom: null, playing: null, speed: 3,
+    tlHidden: readHidden(),
   };
   let D = definitions(st.settings);
 
@@ -149,6 +155,14 @@ export function startApp(root, opts) {
     st.cur = barOfEntry(entry);
     if (opts2.mode) st.mode = opts2.mode;
     update(true);
+    if (opts2.reveal) revealDoc();
+  }
+
+  // After a jump from a side panel, bring the document into view if it has scrolled out of sight under the timeline.
+  function revealDoc() {
+    const r = docWrap.getBoundingClientRect(), top = dock.getBoundingClientRect().bottom;
+    if (r.top >= top && r.bottom <= window.innerHeight) return;
+    window.scrollBy(0, docPanel.getBoundingClientRect().top - top);
   }
 
   // Shift+arrows move one burst, the brackets one session, whatever the zoom level.
@@ -164,22 +178,23 @@ export function startApp(root, opts) {
 
   // ---- Building the main view ----
   let tlHost, scrub, stepInfo, docHost, minimap, modeButtons, rangeNote, levelSelect, axisButtons, zoomOut, playBtn, tabSelect;
+  let timeline, tlToggle, dock, docPanel, docWrap;
 
   function build() {
     const A = st.A;
     setHeader();
     titleEl.textContent = st.context.title || A.meta.title || 'Untitled document';
-    tlHost = el('div', { class: 'tl-host', tabindex: '-1' });
-    scrub = el('input', { type: 'range', min: 0, max: Math.max(0, st.bars.length - 1), value: st.cur, class: 'scrubber', 'aria-label': 'Step', on: { input: () => { st.cur = Number(scrub.value); st.rangeFrom = null; update(true); } } });
+    tlHost = el('div', { class: 'tl-host tl-full', tabindex: '-1' });
+    scrub = el('input', { type: 'range', min: 0, max: Math.max(0, st.bars.length - 1), value: st.cur, class: 'scrubber tl-full', 'aria-label': 'Step', on: { input: () => { st.cur = Number(scrub.value); st.rangeFrom = null; update(true); } } });
     stepInfo = el('p', { class: 'step-info', 'aria-live': 'polite' });
-    levelSelect = el('select', { 'aria-label': 'Zoom level', on: { change: () => { st.level = levelSelect.value; const e = st.bars[st.cur].b; regroup(); st.cur = barOfEntry(e); update(true); } } },
+    levelSelect = el('select', { class: 'tl-full', 'aria-label': 'Zoom level', on: { change: () => { st.level = levelSelect.value; const e = st.bars[st.cur].b; regroup(); st.cur = barOfEntry(e); update(true); } } },
       ['auto', ...LEVELS].map(L => el('option', { value: L }, LEVEL_NAMES[L])));
-    axisButtons = el('div', { class: 'seg', role: 'group', 'aria-label': 'Timeline axis' },
+    axisButtons = el('div', { class: 'seg tl-full', role: 'group', 'aria-label': 'Timeline axis' },
       ['step', 'clock'].map(a => el('button', { type: 'button', class: 'seg-btn', 'data-axis': a, 'aria-pressed': String(st.axis === a), on: { click: () => { st.axis = a; update(false); } } }, a === 'step' ? 'By step' : 'By clock')));
-    zoomOut = button('Zoom out', () => { const e = st.bars[st.cur].b; st.zoom = null; regroup(); st.cur = barOfEntry(e); update(true); }, 'ghost');
+    zoomOut = button('Zoom out', () => { const e = st.bars[st.cur].b; st.zoom = null; regroup(); st.cur = barOfEntry(e); update(true); }, 'ghost tl-full');
     playBtn = button('Play', togglePlay, '', 'Play (Space)');
     const speedSel = el('select', { 'aria-label': 'Play speed', on: { change: e => { st.speed = Number(e.target.value); if (st.playing) { togglePlay(); togglePlay(); } } } }, SPEEDS.map(s => el('option', { value: s, selected: s === st.speed }, `${s} steps/s`)));
-    const legend = el('div', { class: 'legend' }, [0, 1, 2, 3, 4, 5, 6, 7].map(k => el('span', { class: 'key' }, el('i', { class: 'sw p-' + (KIND_STYLE[k].pattern || 'none'), style: `background-color:${KIND_STYLE[k].color}` }), KIND_STYLE[k].name)),
+    const legend = el('div', { class: 'legend tl-full' }, [0, 1, 2, 3, 4, 5, 6, 7].map(k => el('span', { class: 'key' }, el('i', { class: 'sw p-' + (KIND_STYLE[k].pattern || 'none'), style: `background-color:${KIND_STYLE[k].color}` }), KIND_STYLE[k].name)),
       el('span', { class: 'key' }, el('i', { class: 'sw flagmark' }), 'flag'), defLink('steps', openDef, 'steps'));
 
     modeButtons = el('div', { class: 'seg', role: 'group', 'aria-label': 'Document view' },
@@ -191,19 +206,46 @@ export function startApp(root, opts) {
     minimap = el('canvas', { class: 'minimap', 'aria-hidden': 'true', title: 'Origin of the text (click to scroll)' });
     minimap.addEventListener('click', ev => { const r = minimap.getBoundingClientRect(); docHost.scrollTop = ((ev.clientY - r.top) / r.height) * docHost.scrollHeight - docHost.clientHeight / 2; });
 
-    const timeline = el('section', { class: 'panel timeline', 'aria-labelledby': 'h-tl' },
+    tlToggle = el('button', { type: 'button', class: 'btn ghost tl-toggle', 'aria-controls': 'tl-panel', on: { click: toggleTimeline } });
+    timeline = el('section', { class: 'panel timeline', id: 'tl-panel', 'aria-labelledby': 'h-tl' },
       el('div', { class: 'tl-controls' }, el('h2', { id: 'h-tl' }, 'Timeline'), levelSelect, axisButtons, zoomOut, playBtn, speedSel,
-        el('span', { class: 'hint' }, 'Drag across bars to zoom · Shift-click a second bar to see a range')),
+        el('span', { class: 'hint tl-full' }, 'Drag across bars to zoom · Shift-click a second bar to see a range'), tlToggle),
       tlHost, scrub, stepInfo, legend);
-    const docPanel = el('section', { class: 'panel document', 'aria-labelledby': 'h-doc' },
+    // The timeline stays pinned under the header while the document and the side panels scroll beneath it.
+    dock = el('div', { class: 'tl-dock' }, timeline);
+    docWrap = el('div', { class: 'doc-wrap' }, docHost, minimap);
+    docPanel = el('section', { class: 'panel document', 'aria-labelledby': 'h-doc' },
       el('div', { class: 'doc-controls' }, el('h2', { id: 'h-doc' }, 'Document'), modeButtons, tabSelect, originKey()),
-      rangeNote,
-      el('div', { class: 'doc-wrap' }, docHost, minimap));
+      rangeNote, docWrap);
+    const jump = e => goToEntry(e, { mode: 'change', reveal: true });
     const side = el('aside', { class: 'side' },
-      summaryPanel(A, openDef), bulkPanel(A, e => goToEntry(e, { mode: 'change' }), openDef), indicatorsPanel(A, openDef, e => goToEntry(e, { mode: 'change' })),
+      summaryPanel(A, openDef), bulkPanel(A, jump, openDef), indicatorsPanel(A, openDef, jump),
       authorsPanel(A, openDef, store.setMe ? { setMe } : null), chartsPanel(A, openDef));
-    body.replaceChildren(...[warningsBanner(A), el('div', { class: 'layout' }, el('div', { class: 'main-col' }, timeline, docPanel), side)].filter(Boolean));
+    body.replaceChildren(...[warningsBanner(A), dock, el('div', { class: 'layout' }, el('div', { class: 'main-col' }, docPanel), side)].filter(Boolean));
+    showTimeline();
     update(true);
+  }
+
+  // The header's and the pinned timeline's heights, as CSS variables: the document box and the side column are sized
+  // to fit below them. Measured on every update, before the minimap is drawn, so it is drawn at the box's final height.
+  function measure() {
+    const css = document.documentElement.style;
+    css.setProperty('--head-h', header.offsetHeight + 'px');
+    css.setProperty('--dock-h', dock.offsetHeight + 'px');
+  }
+
+  function showTimeline() {
+    timeline.classList.toggle('collapsed', st.tlHidden);
+    tlToggle.textContent = st.tlHidden ? 'Show timeline' : 'Hide';
+    tlToggle.title = (st.tlHidden ? 'Show the timeline' : 'Hide the timeline to give the document more room') + ' (T)';
+    tlToggle.setAttribute('aria-expanded', String(!st.tlHidden));
+  }
+
+  function toggleTimeline() {
+    st.tlHidden = !st.tlHidden;
+    saveHidden(st.tlHidden);
+    showTimeline();
+    update(false);
   }
 
   function originKey() {
@@ -224,7 +266,7 @@ export function startApp(root, opts) {
     const A = st.A, bars = st.bars;
     if (!bars.length) { body.querySelector('.main-col') && (stepInfo.textContent = 'No steps.'); return; }
     st.cur = Math.max(0, Math.min(bars.length - 1, st.cur));
-    renderTimeline(tlHost, A, { bars, cur: st.cur, rangeFrom: st.rangeFrom, axis: st.axis }, {
+    if (!st.tlHidden) renderTimeline(tlHost, A, { bars, cur: st.cur, rangeFrom: st.rangeFrom, axis: st.axis }, {
       select: (i, shift) => { if (shift) st.rangeFrom = st.rangeFrom == null ? st.cur : st.rangeFrom; else st.rangeFrom = null; st.cur = i; update(true); },
       zoom: (i, j) => { st.zoom = [bars[i].a, bars[j].b]; regroup(); st.cur = st.bars.length - 1; st.rangeFrom = null; update(true); },
     });
@@ -244,15 +286,21 @@ export function startApp(root, opts) {
     stepInfo.textContent = `Step ${fmtInt(st.cur + 1)} of ${fmtInt(bars.length)} (${lvl}${st.level === 'auto' ? ', chosen automatically' : ''}${st.zoom ? ', zoomed in' : ''}) · ${fmtDateTime(b.t0)}${b.t1 - b.t0 >= 60000 ? ' to ' + fmtDateTime(b.t1) + ' (' + fmtDuration(b.t1 - b.t0) + ')' : ''} · ${fmtInt(b.b - b.a + 1)} entr${b.b === b.a ? 'y' : 'ies'} · +${fmtInt(b.insTotal)} / −${fmtInt(b.del)} characters${b.bulk ? ' · bulk insertion' : ''}`;
     rangeNote.textContent = st.rangeFrom != null ? `Before and after shows the net change over steps ${lo + 1} to ${hi + 1}: +${fmtInt(ins)} / −${fmtInt(del)} characters.` : st.mode === 'change' ? 'Highlighted: what this step added. Struck through: what it removed.' : '';
 
+    measure();
     const { first, visibleIds } = renderDocument(docHost, A, { tab: st.tab, k, kPrev, mode: st.mode });
     const changed = new Set();
     for (const id of visibleIds) if (A.chars.ins[id] > kPrev) changed.add(id);
     renderMinimap(minimap, A, visibleIds, changed);
     const key = document.getElementById('origin-key');
     if (key) key.replaceChildren(...modeKey(A));
+    // Bring the first change into view by scrolling the document's own box only. (scrollIntoView would also scroll the
+    // page, moving the timeline out from under the pointer.) Its paragraph is laid out first: paragraphs off screen are
+    // skipped (content-visibility) and keep a one-line placeholder height until drawn, which would leave nothing to scroll to.
     if (scrollDoc && first) {
+      const para = first.closest('.p');
+      if (para) para.style.contentVisibility = 'visible';
       const r = first.getBoundingClientRect(), h = docHost.getBoundingClientRect();
-      if (r.top < h.top || r.bottom > h.bottom) first.scrollIntoView({ block: 'center' });
+      if (r.top < h.top || r.bottom > h.bottom) docHost.scrollTop += r.top - h.top - Math.max(0, (docHost.clientHeight - r.height) / 2);
     }
   }
 
@@ -293,6 +341,7 @@ export function startApp(root, opts) {
     else if (k === 'End') { st.cur = st.bars.length - 1; st.rangeFrom = null; update(true); }
     else if (k === ' ' && t.tagName !== 'BUTTON') togglePlay();
     else if (/^[1-4]$/.test(k) && !ev.metaKey && !ev.ctrlKey && !ev.altKey) { st.mode = MODES[Number(k) - 1].id; update(false); }
+    else if ((k === 't' || k === 'T') && !ev.metaKey && !ev.ctrlKey && !ev.altKey) toggleTimeline();
     else if (k === 'Escape' && actions.close) actions.close();
     else handled = false;
     if (handled) ev.preventDefault();

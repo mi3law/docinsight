@@ -61,10 +61,22 @@ h3 { font-size: 13px; margin: 14px 0 6px; color: var(--muted); text-transform: u
 .warn { margin: 0; padding: 8px 12px; background: var(--look-bg); border-left: 4px solid var(--look); border-radius: 4px; }
 .warn.strong { background: var(--flag-bg); border-left-color: var(--flag); font-weight: 600; }
 
-/* Timeline */
+/* Timeline: pinned under the header (--head-h and --dock-h are measured by the script); the page scrolls beneath it.
+   The dock's own background spans the full width so nothing shows around the panel while it is pinned. */
+.tl-dock { position: sticky; top: var(--head-h, 0px); z-index: 4; background: var(--bg); margin: -8px -16px 0; padding: 8px 16px 14px; }
+html { scroll-padding-top: calc(var(--head-h, 0px) + var(--dock-h, 0px)); }
+@media (max-height: 560px) {
+  .tl-dock { position: static; }
+  html { scroll-padding-top: var(--head-h, 0px); }
+}
+.tl-toggle { white-space: nowrap; }
+.timeline.collapsed .tl-full { display: none; }
+.timeline.collapsed .tl-toggle { margin-left: auto; }
+.timeline.collapsed .tl-controls { margin-bottom: 4px; }
+.timeline.collapsed .step-info { min-height: 0; margin: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .tl-controls, .doc-controls { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 8px; }
 .tl-controls select, .doc-controls select { padding: 4px 6px; border-radius: 6px; border: 1px solid var(--line-2); background: var(--surface); }
-.hint { color: var(--muted); font-size: 12px; margin-left: auto; }
+.hint { color: var(--muted); font-size: 12px; margin-left: auto; flex: 1 1 180px; min-width: 0; text-align: right; }
 .seg { display: inline-flex; border: 1px solid var(--line-2); border-radius: 6px; overflow: hidden; }
 .seg-btn { border: 0; background: var(--surface); padding: 5px 10px; cursor: pointer; border-right: 1px solid var(--line-2); }
 .seg-btn:last-child { border-right: 0; }
@@ -81,7 +93,7 @@ h3 { font-size: 13px; margin: 14px 0 6px; color: var(--muted); text-transform: u
 .tl-other { fill: var(--ink); fill-opacity: .55; }
 .tl-bar:hover rect:first-child { filter: brightness(1.1); }
 .scrubber { width: 100%; margin: 8px 0 2px; accent-color: var(--accent); }
-.step-info { margin: 2px 0 6px; font-variant-numeric: tabular-nums; }
+.step-info { margin: 2px 0 6px; font-variant-numeric: tabular-nums; min-height: 2.9em; } /* two lines kept, so a longer step's text does not push the page down */
 .legend { display: flex; flex-wrap: wrap; gap: 4px 14px; font-size: 12px; color: var(--muted); align-items: center; }
 .key { display: inline-flex; align-items: center; gap: 5px; white-space: nowrap; }
 .sw { width: 12px; height: 12px; border-radius: 3px; display: inline-block; }
@@ -95,7 +107,17 @@ h3 { font-size: 13px; margin: 14px 0 6px; color: var(--muted); text-transform: u
 /* Document */
 .range-note { margin: 0 0 6px; color: var(--muted); min-height: 1.2em; }
 .origin-key { display: flex; gap: 8px; flex-wrap: wrap; font-size: 12px; align-items: center; }
-.doc-wrap { display: grid; grid-template-columns: minmax(0, 1fr) 16px; gap: 8px; height: min(70vh, 720px); }
+/* Tall enough to fill the window below the pinned timeline (104px: the panel's own heading, note and padding). The
+   explicit row lets the box shrink: the minimap canvas would otherwise hold it at its last drawn height. */
+.doc-wrap { display: grid; grid-template-columns: minmax(0, 1fr) 16px; grid-template-rows: minmax(0, 1fr); gap: 8px; height: max(280px, calc(100vh - var(--head-h, 52px) - var(--dock-h, 340px) - 104px)); }
+@media (max-height: 560px) { .doc-wrap { height: min(70vh, 720px); } }
+/* Wide windows: the side panels scroll in their own column beside the document, so the timeline, the document and
+   the panels all stay in view. Narrow windows stack them and scroll the page as usual. */
+@media (min-width: 1101px) and (min-height: 561px) {
+  .side { position: sticky; top: calc(var(--head-h, 0px) + var(--dock-h, 0px)); max-height: calc(100vh - var(--head-h, 0px) - var(--dock-h, 0px) - 11px); overflow-y: auto; overscroll-behavior: contain; scrollbar-gutter: stable; }
+  .doc-text { overscroll-behavior: contain; }
+  .app-body { padding-bottom: 12px; }
+}
 .doc-text { overflow-y: auto; border: 1px solid var(--line); border-radius: 6px; padding: 18px 22px; background: var(--surface); font: 15px/1.6 Georgia, "Times New Roman", serif; white-space: pre-wrap; overflow-wrap: anywhere; }
 .doc-text .p { min-height: 1.6em; content-visibility: auto; contain-intrinsic-size: auto 1.6em; }
 .doc-text .p.row { border-top: 1px dotted var(--line-2); }
@@ -124,7 +146,8 @@ h3 { font-size: 13px; margin: 14px 0 6px; color: var(--muted); text-transform: u
 .swatch { width: 12px; height: 12px; border-radius: 50%; display: inline-block; flex: none; }
 
 /* Side panels */
-.summary-text { margin: 6px 0 10px; }
+.summary-points { margin: 6px 0 10px; padding-left: 18px; }
+.summary-points li { margin: 3px 0; }
 .stats { display: grid; grid-template-columns: 1fr; gap: 0; margin: 0; }
 .stat { display: grid; grid-template-columns: 1fr auto; gap: 8px; padding: 4px 0; border-bottom: 1px solid var(--line); }
 .stat dt { color: var(--muted); }

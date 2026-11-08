@@ -27,7 +27,7 @@ export function summaryPanel(A, open) {
   const G = A.granularity;
   return el('section', { class: 'panel', 'aria-labelledby': 'h-summary' },
     el('h2', { id: 'h-summary' }, 'Summary'),
-    el('p', { class: 'summary-text' }, A.summary),
+    el('ul', { class: 'summary-points' }, (A.summaryPoints || [A.summary]).map(p => el('li', {}, p))),
     el('dl', { class: 'stats' },
       stat('Writer', w ? w.name : '—', null, open),
       stat('First edit', fmtDateTime(s.firstEdit), 'time', open),

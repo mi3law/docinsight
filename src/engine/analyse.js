@@ -210,7 +210,8 @@ export function analyse(raw, settingsIn = {}, context = {}) {
   A.placeholders = findPlaceholders(A, CF.PLACEHOLDER);
   for (const b of bulk.concat(chunks)) b.placeholders = A.placeholders.filter(f => f.entry === b.entry);
   A.indicators = runIndicators(A, context.references || null);
-  A.summary = summarySentence(A);
+  A.summaryPoints = summaryPoints(A);
+  A.summary = A.summaryPoints.join(' ');
   return A;
 }
 
@@ -329,10 +330,12 @@ function dataWarnings({ raw, r, users, writer, teacher, tabs, stats, coarse, n, 
 
 function pct(x) { return Math.round(x * 100) + '%'; }
 
-// One plain-language paragraph of what the log shows (for the summary panel and the record).
-export function summarySentence(A) {
+// What the log shows in plain language, one sentence per point (the summary panel and the record list them as bullets).
+export function summarySentence(A) { return summaryPoints(A).join(' '); }
+
+export function summaryPoints(A) {
   const s = A.stats, u = A.users[A.writer];
-  if (!A.entries.n) return 'The history is empty.';
+  if (!A.entries.n) return ['The history is empty.'];
   const fmt = t => new Date(t).toLocaleString('en-GB', { dateStyle: 'medium', timeStyle: 'short' });
   const mins = Math.round(s.activeMs / 60000);
   const parts = [];
@@ -348,7 +351,7 @@ export function summarySentence(A) {
   const flagged = A.indicators.filter(x => x.tier === 'indicator' && (x.status === 'flag' || x.status === 'look'));
   if (flagged.length) parts.push(`Indicators worth a look: ${flagged.map(x => x.title.toLowerCase()).join(', ')}.`);
   parts.push('This describes the writing process as Google Docs recorded it; it does not say who wrote the text or how.');
-  return parts.join(' ');
+  return parts;
 }
 
 export { textAt, NONE, CF, EF };

@@ -145,7 +145,7 @@ figure{margin:8px 0}figure svg{width:100%;height:auto;border:1px solid #e3e6ee}f
 <title>DocInsight record: ${esc(title)}</title><style>${css}</style></head><body>`;
   h += `<h1>${esc(title)}</h1>`;
   h += `<p class="meta">${context.href ? `<a href="${esc(context.href)}">${esc(context.href)}</a><br>` : ''}Writer: <strong>${esc(writer ? writer.name : '—')}</strong> · first edit ${esc(when(s.firstEdit))} · last edit ${esc(when(s.lastEdit))}<br>Record made ${esc(when(Date.now()))} with DocInsight from Google Docs' revision history. Times are in ${esc(tz || 'the local time zone')}.</p>`;
-  h += `<h2>Summary</h2><p>${esc(A.summary)}</p>`;
+  h += `<h2>Summary</h2><ul>${(A.summaryPoints || [A.summary]).map(p => `<li>${esc(p)}</li>`).join('')}</ul>`;
   if (A.warnings.length) h += `<h2>About the data</h2>` + A.warnings.map(w => `<p class="warn${w.level === 'strong' ? ' strong' : ''}">${esc(w.text)}</p>`).join('');
   h += `<h2>Timeline</h2>${timelineSvg(A)}`;
 
