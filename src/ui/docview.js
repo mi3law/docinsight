@@ -20,13 +20,28 @@ export function authorColor(A, u) {
   return /^#[0-9a-f]{6}$/i.test(c || '') ? c : AUTHOR_PALETTE[u % AUTHOR_PALETTE.length];
 }
 
+// Age is measured in writing time, not clock time: a pause longer than the session gap counts as one session gap, so
+// the days between sessions do not squeeze everything into one or two shades. activeTime[i] is the writing time from
+// the first entry to entry i.
+const activeCache = new WeakMap();
+function activeTime(A) {
+  let act = activeCache.get(A);
+  if (act) return act;
+  const E = A.entries, cap = ((A.settings && A.settings.sessionGapMin) || 5) * 60000;
+  act = new Float64Array(E.n);
+  for (let i = 1; i < E.n; i++) act[i] = act[i - 1] + Math.min(cap, Math.max(0, E.t[i] - E.t[i - 1]));
+  activeCache.set(A, act);
+  return act;
+}
+
 // opts: { tab (index), k (entry index: show the text after it), kPrev (for before and after), mode }
 export function renderDocument(host, A, opts) {
   const { k, kPrev, mode } = opts;
   const tab = A.tabs[opts.tab] || A.tabs[0];
   const C = A.chars, E = A.entries;
-  const t0 = E.n ? E.t[0] : 0, t1 = E.n ? E.t[E.n - 1] : 1;
-  const span = Math.max(1, t1 - t0);
+  // The gradient runs from the start of the history to the step shown, so the newest text at this step is the strongest.
+  const act = mode === 'age' && E.n ? activeTime(A) : null;
+  const ageSpan = act && k >= 0 ? act[Math.min(k, E.n - 1)] : 0;
   const frag = document.createDocumentFragment();
   let block = el('div', { class: 'p' }), runKey = null, runText = '', runTitle = null, first = null;
   const blocks = [];
@@ -58,9 +73,9 @@ export function renderDocument(host, A, opts) {
     if (mode === 'change') key = removed ? 'del' : ins > kPrev ? (teacherChar ? 'add teacher' : 'add') : teacherChar ? 'teacher' : '';
     else if (mode === 'age') {
       const src = C.src[id];
-      const t = src >= 0 ? E.t[src] : t0;
-      key = 'age' + Math.min(AGE_BUCKETS - 1, Math.floor(((t - t0) / span) * AGE_BUCKETS));
-      title = fmtDateTime(Math.floor(t / 60000) * 60000);
+      const bucket = src < 0 ? 0 : ageSpan > 0 ? Math.min(AGE_BUCKETS - 1, Math.floor((act[src] / ageSpan) * AGE_BUCKETS)) : AGE_BUCKETS - 1;
+      key = 'age' + bucket;
+      title = src < 0 ? 'baseline text' : fmtDateTime(Math.floor(E.t[src] / 60000) * 60000);
     } else if (mode === 'origin') {
       key = 'o' + A.origin[id] + (C.flag[id] & MOVED ? ' moved' : '');
       title = ORIGIN_STYLE[A.origin[id]].name + (C.flag[id] & MOVED ? ' (moved within the document)' : '');
