@@ -17,6 +17,7 @@ import { isDocInsightError, MESSAGES } from '../engine/errors.js';
 let activeKeys = null, activeResize = null;   // one interface per page: a new one replaces the old one's listeners
 const LEVEL_NAMES = { auto: 'Auto', session: 'Sessions', minute: 'Minutes', burst: 'Bursts', entry: 'Single entries' };
 const SPEEDS = [1, 3, 10, 30];
+const PLAY_LABELS = ['Play timeline', 'Pause timeline'];
 
 // Whether the pinned timeline is hidden, and whether the document or the side panels are collapsed: per-browser
 // conveniences, so they may not be remembered (private windows).
@@ -237,7 +238,7 @@ export function startApp(root, opts) {
     zoomOutBtn = iconButton('minus', 'Zoom out', zoomOut, '', 'Zoom out (-)');
     zoomInBtn = iconButton('plus', 'Zoom in', zoomIn, '', 'Zoom in around this step (+)');
     const zoomPair = el('div', { class: 'btn-pair tl-full', role: 'group', 'aria-label': 'Zoom' }, zoomOutBtn, zoomInBtn);
-    playBtn = iconButton('play', 'Play', togglePlay);
+    playBtn = el('button', { type: 'button', class: 'btn play-btn', on: { click: togglePlay } });
     const speedSel = el('select', { 'aria-label': 'Play speed', on: { change: e => { st.speed = Number(e.target.value); if (st.playing) { togglePlay(); togglePlay(); } } } }, SPEEDS.map(s => el('option', { value: s, selected: s === st.speed }, `${s} steps/s`)));
     const legend = el('div', { class: 'legend tl-full' }, [0, 1, 2, 3, 4, 5, 6, 7].map(k => el('span', { class: 'key' }, el('i', { class: 'sw p-' + (KIND_STYLE[k].pattern || 'none'), style: `background-color:${KIND_STYLE[k].color}` }), KIND_STYLE[k].name)),
       el('span', { class: 'key' }, el('i', { class: 'sw flagmark' }), 'flag'), defLink('steps', openDef, 'steps'));
@@ -391,10 +392,13 @@ export function startApp(root, opts) {
     return A.users.map((u, i) => el('span', { class: 'key' }, el('span', { class: 'swatch', style: `background:${authorColor(A, i)}` }), u.name));
   }
 
+  // The play button says what it does in words beside the icon, so a newcomer sees how to replay the writing. Both
+  // labels are always in it, one hidden, so it keeps one width and the controls beside it stay put when it toggles.
   // While playing, the button (showing Pause) and the timeline panel are coloured, so playback is plain at a glance.
   function showPlaying() {
-    const label = st.playing ? 'Pause' : 'Play';
-    playBtn.replaceChildren(icon(st.playing ? 'pause' : 'play'));
+    const label = PLAY_LABELS[st.playing ? 1 : 0];
+    playBtn.replaceChildren(icon(st.playing ? 'pause' : 'play'),
+      el('span', { class: 'play-label' }, PLAY_LABELS.map(l => el('span', { class: l === label ? null : 'off' }, l))));
     playBtn.setAttribute('aria-label', label);
     playBtn.title = label + ' (Space)';
     playBtn.classList.toggle('playing', !!st.playing);

@@ -110,9 +110,15 @@ html { scroll-padding-top: calc(var(--head-h, 0px) + var(--dock-h, 0px)); }
 .tl-restore { fill: none; stroke: #e87ba4; stroke-width: 2; }
 .tl-other { fill: var(--ink); fill-opacity: .55; }
 .tl-bar:hover rect:first-child { filter: brightness(1.1); }
+/* The play button: the icon and a label, so a newcomer sees how to replay the writing. Both labels share one grid
+   cell (the other hidden), so the button keeps the width of the longer one and the controls beside it stay put. */
+.btn.play-btn { display: inline-flex; align-items: center; gap: 6px; padding-left: 10px; flex: none; font-weight: 600; white-space: nowrap; }
+.play-label { display: inline-grid; }
+.play-label > span { grid-area: 1 / 1; }
+.play-label > .off { visibility: hidden; }
 /* Playing: the play button (now Pause) is filled with the accent, and the timeline panel takes an accent outline and a
    faint accent wash, so it looks different from a paused timeline. The bars keep their colours: they carry the legend. */
-.btn.icon-btn.playing, .btn.icon-btn.playing:hover { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
+.btn.play-btn.playing, .btn.play-btn.playing:hover { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
 .timeline.playing { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent); }
 .timeline.playing .tl-host { border-color: var(--accent); background: color-mix(in srgb, var(--accent) 8%, var(--surface)); }
 .timeline.playing .tl-cur { stroke: var(--accent); stroke-width: 2; }
