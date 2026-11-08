@@ -74,6 +74,8 @@ document (Escape closes it; **Pop out** opens it in its own tab for a second scr
   insertions, chunks, baseline and Gemini-like text marked), **4 Author**. The strip beside the text always shows origin.
 - **The side panel**: a plain-language summary, the statistics, each bulk insertion (click one to jump there), the
   indicators, the authors and charts. Every number has a **?** with its definition.
+- **Collapsing**: the chevron by **Document** or **Summary** folds that section into a slim strip (click the strip to
+  bring it back), and the other takes the full width. Only one folds at a time; the choice is remembered per browser.
 
 Keys: ← → one step · Shift+← → one burst · [ ] one session · Home / End · Space play or pause · + − zoom · 1 to 4 views · T hide the timeline · Escape close.
 Shift-click a second bar to see the net change over a range of steps.

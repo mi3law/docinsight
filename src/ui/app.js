@@ -18,10 +18,11 @@ let activeKeys = null, activeResize = null;   // one interface per page: a new o
 const LEVEL_NAMES = { auto: 'Auto', session: 'Sessions', minute: 'Minutes', burst: 'Bursts', entry: 'Single entries' };
 const SPEEDS = [1, 3, 10, 30];
 
-// Whether the pinned timeline is hidden: a per-browser convenience, so it may not be remembered (private windows).
-const HIDE_KEY = 'docinsight:timeline-hidden';
-const readHidden = () => { try { return localStorage.getItem(HIDE_KEY) === '1'; } catch { return false; } };
-const saveHidden = v => { try { v ? localStorage.setItem(HIDE_KEY, '1') : localStorage.removeItem(HIDE_KEY); } catch { /* not remembered */ } };
+// Whether the pinned timeline is hidden, and whether the document or the side panels are collapsed: per-browser
+// conveniences, so they may not be remembered (private windows).
+const HIDE_KEY = 'docinsight:timeline-hidden', DOC_KEY = 'docinsight:document-collapsed', SIDE_KEY = 'docinsight:summary-collapsed';
+const readFlag = key => { try { return localStorage.getItem(key) === '1'; } catch { return false; } };
+const saveFlag = (key, v) => { try { v ? localStorage.setItem(key, '1') : localStorage.removeItem(key); } catch { /* not remembered */ } };
 
 // opts: { mode: 'extension' | 'popout' | 'web' | 'record', context: { title, href, docId, teacherUid, timeZone },
 //   load({ onProgress, signal }) -> raw, notes, store: { getSettings, setSettings, getMe, setMe }, actions: { close, popOut, diagnostics, back } }
@@ -31,7 +32,7 @@ export function startApp(root, opts) {
   const st = {
     raw: null, A: null, settings: normalizeSettings({}), context: Object.assign({}, opts.context || {}), notes: opts.notes || '',
     tab: 0, mode: 'change', axis: 'step', level: 'auto', zoom: null, zoomStack: [], ends: null, bars: [], cur: 0, rangeFrom: null, playing: null, speed: 3,
-    tlHidden: readHidden(),
+    tlHidden: readFlag(HIDE_KEY), docHidden: readFlag(DOC_KEY), sideHidden: readFlag(SIDE_KEY) && !readFlag(DOC_KEY),
   };
   let D = definitions(st.settings);
 
@@ -204,7 +205,7 @@ export function startApp(root, opts) {
 
   // ---- Building the main view ----
   let tlHost, scrub, stepInfo, docHost, minimap, modeButtons, rangeNote, levelSelect, axisButtons, zoomInBtn, zoomOutBtn, playBtn, tabSelect;
-  let timeline, tlToggle, dock, docPanel, docWrap;
+  let timeline, tlToggle, dock, docPanel, docWrap, layout, docCollapse, sideCollapse, docRail, sideRail;
 
   function build() {
     const A = st.A;
@@ -243,16 +244,47 @@ export function startApp(root, opts) {
     // The timeline stays pinned under the header while the document and the side panels scroll beneath it.
     dock = el('div', { class: 'tl-dock' }, timeline);
     docWrap = el('div', { class: 'doc-wrap' }, docHost, minimap);
+    docCollapse = iconButton('chevron', 'Collapse the document', () => setCollapsed('doc', true), 'ghost small collapse-btn doc-collapse', 'Collapse the document so the summary takes the full width');
     docPanel = el('section', { class: 'panel document', 'aria-labelledby': 'h-doc' },
-      el('div', { class: 'doc-controls' }, el('h2', { id: 'h-doc' }, 'Document'), modeButtons, tabSelect, originKey()),
+      el('div', { class: 'doc-controls' }, el('h2', { id: 'h-doc' }, 'Document'), modeButtons, tabSelect, originKey(), docCollapse),
       rangeNote, docWrap);
-    const jump = e => goToEntry(e, { mode: 'change', reveal: true });
+    // A jump from a side panel shows the document, so it opens the document if it was collapsed.
+    const jump = e => { if (st.docHidden) setCollapsed('doc', false, false); goToEntry(e, { mode: 'change', reveal: true }); };
+    const summary = summaryPanel(A, openDef);
+    sideCollapse = iconButton('chevron', 'Collapse the summary', () => setCollapsed('side', true), 'ghost small collapse-btn side-collapse', 'Collapse the summary panels so the document takes the full width');
+    summary.prepend(sideCollapse);
     const side = el('aside', { class: 'side' },
-      summaryPanel(A, openDef), bulkPanel(A, jump, openDef), indicatorsPanel(A, openDef, jump),
+      summary, bulkPanel(A, jump, openDef), indicatorsPanel(A, openDef, jump),
       authorsPanel(A, openDef, store.setMe ? { setMe } : null), chartsPanel(A, openDef));
-    body.replaceChildren(...[warningsBanner(A), dock, el('div', { class: 'layout' }, el('div', { class: 'main-col' }, docPanel), side)].filter(Boolean));
+    docRail = rail('Document', 'Show the document', () => setCollapsed('doc', false), 'doc-rail');
+    sideRail = rail('Summary', 'Show the summary panels', () => setCollapsed('side', false), 'side-rail');
+    layout = el('div', { class: 'layout' }, docRail, el('div', { class: 'main-col' }, docPanel), side, sideRail);
+    body.replaceChildren(...[warningsBanner(A), dock, layout].filter(Boolean));
     showTimeline();
+    showCollapsed();
     update(true);
+  }
+
+  // ---- Collapsing the document or the side panels: the other takes the full width; never both at once ----
+  function rail(label, title, onClick, cls) {
+    return el('button', { type: 'button', class: 'rail ' + cls, title, 'aria-label': title, on: { click: onClick } }, icon('chevron'), el('span', { class: 'rail-label' }, label));
+  }
+  function showCollapsed() {
+    layout.classList.toggle('doc-collapsed', st.docHidden);
+    layout.classList.toggle('side-collapsed', st.sideHidden);
+    docCollapse.setAttribute('aria-expanded', String(!st.docHidden));
+    sideCollapse.setAttribute('aria-expanded', String(!st.sideHidden));
+  }
+  function setCollapsed(which, hidden, moveFocus = true) {
+    if (which === 'doc') { st.docHidden = hidden; if (hidden) st.sideHidden = false; }
+    else { st.sideHidden = hidden; if (hidden) st.docHidden = false; }
+    saveFlag(DOC_KEY, st.docHidden);
+    saveFlag(SIDE_KEY, st.sideHidden);
+    showCollapsed();
+    // Redraw at the new width; a document that comes back scrolls to the current step's change, as it missed it while hidden.
+    update(which === 'doc' && !hidden);
+    // The button pressed has just disappeared: focus moves to the one that undoes it.
+    if (moveFocus) (hidden ? (which === 'doc' ? docRail : sideRail) : (which === 'doc' ? docCollapse : sideCollapse)).focus({ preventScroll: true });
   }
 
   // The header's and the pinned timeline's heights, as CSS variables: the document box and the side column are sized
@@ -272,7 +304,7 @@ export function startApp(root, opts) {
 
   function toggleTimeline() {
     st.tlHidden = !st.tlHidden;
-    saveHidden(st.tlHidden);
+    saveFlag(HIDE_KEY, st.tlHidden);
     showTimeline();
     update(false);
   }

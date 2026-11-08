@@ -136,11 +136,42 @@ html { scroll-padding-top: calc(var(--head-h, 0px) + var(--dock-h, 0px)); }
 .doc-wrap { display: grid; grid-template-columns: minmax(0, 1fr) 16px; grid-template-rows: minmax(0, 1fr); gap: 8px; height: max(280px, calc(100vh - var(--head-h, 52px) - var(--dock-h, 340px) - 104px)); }
 @media (max-height: 560px) { .doc-wrap { height: min(70vh, 720px); } }
 /* Wide windows: the side panels scroll in their own column beside the document, so the timeline, the document and
-   the panels all stay in view. Narrow windows stack them and scroll the page as usual. */
+   the panels all stay in view. Narrow windows stack them and scroll the page as usual.
+   The document box and the side column hand the wheel on to the page once they reach their end (no overscroll
+   containment): until the warnings above the timeline have scrolled away, the bottom of both sits below the window. */
 @media (min-width: 1101px) and (min-height: 561px) {
-  .side { position: sticky; top: calc(var(--head-h, 0px) + var(--dock-h, 0px)); max-height: calc(100vh - var(--head-h, 0px) - var(--dock-h, 0px) - 11px); overflow-y: auto; overscroll-behavior: contain; scrollbar-gutter: stable; }
-  .doc-text { overscroll-behavior: contain; }
+  .side { position: sticky; top: calc(var(--head-h, 0px) + var(--dock-h, 0px)); max-height: calc(100vh - var(--head-h, 0px) - var(--dock-h, 0px) - 11px); overflow-y: auto; scrollbar-gutter: stable; }
   .app-body { padding-bottom: 12px; }
+}
+
+/* Collapsing: the document or the side panels (never both) shrink to a slim strip that brings them back, and the
+   other takes the full width. Wide windows show the strip as a column at the side; narrow ones as a bar. */
+.btn.icon-btn.small { width: 26px; height: 26px; }
+.collapse-btn { color: var(--muted); }
+.doc-collapse { margin-left: auto; }
+.side-collapse { float: right; margin: -3px -6px 0 8px; }
+.rail { display: none; align-items: center; gap: 8px; width: 100%; padding: 8px 14px; background: var(--surface); border: 1px solid var(--line); border-radius: 10px; color: var(--muted); font-weight: 600; text-align: left; cursor: pointer; }
+.rail:hover { border-color: var(--accent); color: var(--accent); }
+.layout.doc-collapsed .main-col, .layout.side-collapsed .side { display: none; }
+.layout.doc-collapsed .doc-rail, .layout.side-collapsed .side-rail { display: flex; }
+/* The chevron points right; it turns to point where the section goes (collapse) or comes from (rail). */
+.collapse-btn .icon, .rail .icon { transition: transform .15s; }
+.doc-collapse .icon, .side-rail .icon { transform: rotate(180deg); }
+@media (max-width: 1100px) {
+  .collapse-btn .icon { transform: rotate(-90deg); }
+  .rail .icon { transform: rotate(90deg); }
+}
+@media (min-width: 1101px) {
+  .layout.doc-collapsed { grid-template-columns: 40px minmax(0, 1fr); }
+  .layout.side-collapsed { grid-template-columns: minmax(0, 1fr) 40px; }
+  .rail { flex-direction: column; width: 40px; padding: 12px 0; align-self: stretch; min-height: 160px; }
+  .rail-label { writing-mode: vertical-rl; }
+  /* The side panels across the full width: in columns, read top to bottom, and the page scrolls them. */
+  .layout.doc-collapsed .side { display: block; columns: 340px; column-gap: 14px; position: static; max-height: none; overflow: visible; }
+  .layout.doc-collapsed .side > .panel { break-inside: avoid; margin-bottom: 14px; }
+}
+@media (min-width: 1101px) and (min-height: 561px) {
+  .rail { position: sticky; top: calc(var(--head-h, 0px) + var(--dock-h, 0px)); align-self: start; height: calc(100vh - var(--head-h, 0px) - var(--dock-h, 0px) - 11px); }
 }
 .doc-text { overflow-y: auto; border: 1px solid var(--line); border-radius: 6px; padding: 18px 22px; background: var(--surface); font: 15px/1.6 Georgia, "Times New Roman", serif; white-space: pre-wrap; overflow-wrap: anywhere; }
 .doc-text .p { min-height: 1.6em; content-visibility: auto; contain-intrinsic-size: auto 1.6em; }
