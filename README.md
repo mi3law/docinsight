@@ -116,10 +116,13 @@ Students can revoke your access or delete their Doc after grading, so the record
 
 <https://mi3law.github.io/docinsight/>
 
-- **Open a record**: choose or drop a record file. No sign-in.
-- **Check one Doc by its link**: press **Sign in with Google**, use your school account, then paste the Doc's link. The
-  page asks Google for permission to see your Drive files (read-only) and reads the same full history the extension
-  reads, with your own access. The sign-in lasts about an hour and is kept only in the open tab.
+- **Check a Google Doc**: paste the Doc's link and press **Check**. The first check opens Google's sign-in: use your
+  school account. The page asks Google for permission to see your Drive files (read-only) and reads the same full
+  history the extension reads, with your own access. The sign-in lasts about an hour and is kept only in the open tab;
+  **Switch account** under the bar changes it.
+- **Download the extension**: a direct download of this folder as a zip, with the four install steps beside it.
+- **Open a record** (folded under the extension): choose or drop a record file, or drop it anywhere on the page. No
+  sign-in.
 
 Sign-in uses the school's Internal Google sign-in client, the one CensorSearch uses (so Google's sign-in window says
 "CensorSearch"); only school accounts can sign in. Since 20 October 2026 the Google Cloud console requires two-step

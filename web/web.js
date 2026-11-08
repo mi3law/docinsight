@@ -54,7 +54,7 @@ function bearerFetch(token) {
 
 function checkLink(docId) {
   const token = signIn && signIn.token();
-  if (!token) { $('link-status').textContent = 'Sign in with Google first.'; return; }
+  if (!token) { $('link-status').textContent = 'Sign in with your school Google account first.'; return; }
   history.pushState(null, '', '?doc=' + encodeURIComponent(docId));
   startApp(root, {
     mode: 'web',
@@ -70,30 +70,63 @@ function checkLink(docId) {
 }
 
 function wire() {
+  // Open a record: folded away by default, but a record dropped anywhere on the page opens it too.
   const status = $('open-status');
+  const record = $('record');
   $('file').addEventListener('change', e => readFile(e.target.files[0], status));
   const drop = $('drop');
   drop.addEventListener('dragover', e => { e.preventDefault(); drop.classList.add('over'); });
   drop.addEventListener('dragleave', () => drop.classList.remove('over'));
-  drop.addEventListener('drop', e => { e.preventDefault(); drop.classList.remove('over'); readFile(e.dataTransfer.files[0], status); });
-  $('readme').href = CONFIG.repoUrl + '#readme';
+  const home = $('home');
+  const hasFile = e => e.dataTransfer && Array.from(e.dataTransfer.types || []).includes('Files');
+  home.addEventListener('dragover', e => { if (hasFile(e)) e.preventDefault(); });
+  home.addEventListener('drop', e => {
+    if (!hasFile(e)) return;
+    e.preventDefault(); drop.classList.remove('over'); record.open = true;
+    readFile(e.dataTransfer.files[0], status);
+  });
 
+  // The extension: a direct download of the repository, and the one address Chrome won't open from a link.
+  $('download').href = CONFIG.repoUrl + '/archive/refs/heads/main.zip';
+  $('repo').href = CONFIG.repoUrl;
+  const copy = $('copy-addr');
+  const addr = home.querySelector('.addr');
+  copy.addEventListener('click', () => {
+    const done = t => { copy.textContent = t; setTimeout(() => { copy.textContent = 'Copy'; }, 2500); };
+    // Where the clipboard is refused, select the address so the teacher can copy it themselves.
+    const select = () => { const r = document.createRange(); r.selectNodeContents(addr); const s = getSelection(); s.removeAllRanges(); s.addRange(r); done('Selected'); };
+    try { navigator.clipboard.writeText(addr.textContent).then(() => done('Copied'), select); } catch { select(); }
+  });
+
+  // Check a Doc: the first Check signs in (straight from the click, so the browser allows Google's window).
+  const linkStatus = $('link-status');
   const sStatus = $('signin-status');
-  const btn = $('signin');
-  btn.disabled = true;
+  const sw = $('switch');
+  const go = $('link-form').querySelector('.go');
+  let gisError = '';
+  const signedIn = () => { sStatus.textContent = 'Signed in with your Google account.'; sw.hidden = false; };
   loadGis().then(() => {
-    btn.disabled = false;
     if (!signIn) signIn = createSignIn(CONFIG.googleClientId, CONFIG.scope);
-    if (signIn.token()) { sStatus.textContent = 'Signed in.'; btn.textContent = 'Switch account'; }
-  }, e => { sStatus.textContent = e.message; });
-  btn.addEventListener('click', () => {
-    signIn.signIn(btn.textContent === 'Switch account').then(() => { sStatus.textContent = 'Signed in.'; btn.textContent = 'Switch account'; $('link').focus(); }, e => { sStatus.textContent = e.message; });
+    if (signIn.token()) signedIn();
+  }, e => { gisError = e.message; });
+  sw.addEventListener('click', () => {
+    linkStatus.textContent = '';
+    signIn.signIn(true).then(() => { signedIn(); $('link').focus(); }, e => { linkStatus.textContent = e.message; });
   });
   $('link-form').addEventListener('submit', e => {
     e.preventDefault();
+    linkStatus.textContent = '';
     const id = docIdFromLink($('link').value);
-    if (!id) { $('link-status').textContent = 'That is not a Google Docs link. It should look like https://docs.google.com/document/d/…/edit'; return; }
-    checkLink(id);
+    if (!id) { linkStatus.textContent = 'That is not a Google Docs link. It should look like https://docs.google.com/document/d/…/edit'; $('link').focus(); return; }
+    if (signIn && signIn.token()) { checkLink(id); return; }
+    if (!signIn) { linkStatus.textContent = gisError || 'Google sign-in is still loading. Try again in a moment.'; return; }
+    go.disabled = true;
+    sStatus.textContent = 'Signing in with Google…';
+    signIn.signIn(false).then(() => checkLink(id), err => {
+      go.disabled = false;
+      sStatus.textContent = 'The first check asks you to sign in with your school Google account.';
+      linkStatus.textContent = err.message;
+    });
   });
   const q = new URLSearchParams(location.search).get('doc');
   if (q && docIdFromLink(q)) $('link').value = `https://docs.google.com/document/d/${q}/edit`;
