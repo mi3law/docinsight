@@ -201,3 +201,11 @@ details > summary { cursor: pointer; }
 label.block { display: block; margin: 8px 0; } label.block textarea { display: block; width: 100%; margin-top: 4px; padding: 8px; border: 1px solid var(--line-2); border-radius: 6px; background: var(--surface); }
 label.check { display: block; margin: 8px 0; }
 .def-all h3 { text-transform: none; letter-spacing: 0; color: var(--ink); }
+
+/* Update (extension only) */
+.btn.update { background: var(--flag-bg); border-color: var(--flag); color: var(--ink); font-weight: 600; }
+.update-dlg ol { padding-left: 20px; } .update-dlg li { margin: 6px 0; }
+.update-dlg details { margin: 10px 0; } .update-dlg summary { font-weight: 600; }
+.upd-status:empty { display: none; }
+.cmd-row { display: flex; gap: 8px; align-items: flex-start; }
+code.cmd { display: block; flex: 1; min-width: 0; font: 12px/1.5 var(--mono); background: var(--na-bg); border: 1px solid var(--line); border-radius: 6px; padding: 6px 8px; overflow-wrap: anywhere; user-select: all; white-space: pre-wrap; }

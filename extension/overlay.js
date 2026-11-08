@@ -1,9 +1,10 @@
 // The overlay page (an iframe over the Doc, or its pop-out tab). Wires the shared interface to the content-script
 // bridge for the history, to chrome.storage for the thresholds and the teacher's own account, and to the pop-out.
 import { startApp } from '../src/ui/app.js';
-import { getContext, fetchText, closeOverlay, embedded } from './bridge.js';
+import { getContext, fetchText, closeOverlay, embedded, reloadPageSoon } from './bridge.js';
 import { loadHistory } from '../src/engine/fetch.js';
 import { DocInsightError } from '../src/engine/errors.js';
+import { checkForUpdate, openUpdateDialog } from './update.js';
 
 const root = document.getElementById('app');
 const popout = location.hash.startsWith('#popout');
@@ -17,6 +18,15 @@ const store = {
 };
 
 const timeZone = (() => { try { return Intl.DateTimeFormat().resolvedOptions().timeZone; } catch { return ''; } })();
+
+// An "Update available" button in the header when GitHub has a newer version. In the pop-out there is no Doc tab to
+// reload: reloading the extension closes the pop-out.
+async function offerUpdate(app, actions) {
+  const info = await checkForUpdate();
+  if (!info.available) return;
+  actions.update = () => openUpdateDialog(info, { reloadPage: popout ? null : reloadPageSoon });
+  app.refreshHeader();
+}
 
 function popOut(raw, context) {
   const w = window.open(chrome.runtime.getURL('extension/overlay.html#popout'), '_blank');
@@ -39,7 +49,8 @@ if (popout) {
       if (ev.source !== opener || ev.origin !== location.origin || !ev.data || ev.data.type !== 'docinsight:data') return;
       const { raw, context } = ev.data;
       document.title = 'DocInsight: ' + (context.title || 'document');
-      startApp(root, { mode: 'popout', context, raw, load: async () => raw, store });
+      const actions = {};
+      offerUpdate(startApp(root, { mode: 'popout', context, raw, load: async () => raw, store, actions }), actions);
     });
     opener.postMessage({ type: 'docinsight:popout-ready' }, location.origin);
   }
@@ -49,7 +60,12 @@ if (popout) {
   getContext().then(ctx => {
     const p = ctx.params || {};
     const context = { title: ctx.title, href: ctx.href, docId: ctx.docId, timeZone };
-    startApp(root, {
+    const actions = {
+      close: closeOverlay,
+      popOut,
+      diagnostics: () => { location.href = 'diagnostics.html' + location.hash; },
+    };
+    const app = startApp(root, {
       mode: 'extension',
       context,
       store,
@@ -66,11 +82,8 @@ if (popout) {
         const c = (p.idCandidates || []).find(x => keys.includes(x.value));
         return c ? c.value : null;
       },
-      actions: {
-        close: closeOverlay,
-        popOut,
-        diagnostics: () => { location.href = 'diagnostics.html' + location.hash; },
-      },
+      actions,
     });
+    offerUpdate(app, actions);
   }, e => { root.textContent = 'DocInsight could not talk to the Docs page (' + (e && e.message) + '). Reload the document and try again.'; });
 }
