@@ -66,14 +66,16 @@ document (Escape closes it; **Pop out** opens it in its own tab for a second scr
 - **The timeline**: one bar per step. Height is how much text the step inserted (deletions hang below the line); colour
   and texture say what kind (typed, chunk, bulk insertion, baseline text, Gemini-like, suggestion, restored version,
   deletion). A ▼ marks a bulk insertion. It opens at the finest zoom that fits about 300 bars: sessions, minutes, bursts
-  or single entries. Drag across bars to zoom in; **By clock** spaces bars by real time with long gaps collapsed.
+  or single entries. **+** zooms in around the current step and **−** steps back out (or drag across bars to zoom into
+  them); **By clock** spaces bars by real time with long gaps collapsed.
 - **The document** at the chosen step, in four views: **1 Before and after** (what the step added, highlighted; what it
-  removed, struck through, in place), **2 Age** (older text light, newer dark; hover for the time), **3 Origin** (bulk
+  removed, struck through, in place), **2 Age** (older text faint, newer strong, measured in writing time up to the step shown, so days between sessions
+  do not flatten it; hover for the time), **3 Origin** (bulk
   insertions, chunks, baseline and Gemini-like text marked), **4 Author**. The strip beside the text always shows origin.
 - **The side panel**: a plain-language summary, the statistics, each bulk insertion (click one to jump there), the
   indicators, the authors and charts. Every number has a **?** with its definition.
 
-Keys: ← → one step · Shift+← → one burst · [ ] one session · Home / End · Space play · 1 to 4 views · Escape close.
+Keys: ← → one step · Shift+← → one burst · [ ] one session · Home / End · Space play or pause · + − zoom · 1 to 4 views · T hide the timeline · Escape close.
 Shift-click a second bar to see the net change over a range of steps.
 
 **Your own edits** are left out of the student's statistics. If DocInsight doesn't recognise your account, press

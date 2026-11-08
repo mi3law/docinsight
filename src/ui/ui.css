@@ -8,6 +8,9 @@
   --flag: #b86e00; --look: #8a5a00; --ok: #1e7b45; --na: #6b7385; --flag-bg: #fff1d6; --look-bg: #fff8e5; --ok-bg: #e8f5ec; --na-bg: #eef0f4;
   --o1: #cfeee2; --o2: #ffe3a3; --o3: #e3e6ec; --o4: #ddd8fa; --o5: #cfe8cf; --o6: #fbdbe7;
   --a0: #d6e2fb; --a1: #fbe0cc; --a2: #cdeee6; --a3: #eadcf3; --a4: #f7d4d0; --a5: #d9dde3; --a6: #ecefc8; --a7: #f4d5e6;
+  /* Age: one hue, faint (oldest) to strong (newest); every step keeps its text at 4.5:1 or better. */
+  --age0: #eaf1fd; --age1: #dbe7fc; --age2: #cbdcfa; --age3: #b8cff7; --age4: #a3c1f3;
+  --age5: #8db2ee; --age6: #76a2e8; --age7: #5f91e1; --age8: #3a74d3; --age9: #2559b5; --age-strong-ink: #ffffff;
   --mono: ui-monospace, SFMono-Regular, Menlo, monospace;
 }
 @media (prefers-color-scheme: dark) {
@@ -19,6 +22,8 @@
     --flag-bg: #4a3510; --look-bg: #3d3214; --ok-bg: #173a26; --na-bg: #262b36; --flag: #ffc35c; --look: #f2cf74; --ok: #7fd6a0; --na: #a5adbf;
     --o1: #1d4c3c; --o2: #5c4710; --o3: #3a3f4a; --o4: #3b3367; --o5: #1f4a1f; --o6: #5a2f42;
     --a0: #27406e; --a1: #5c3a22; --a2: #1f4d44; --a3: #47325a; --a4: #5a2c27; --a5: #3a3f48; --a6: #4a4d22; --a7: #563048;
+    --age0: #252d3f; --age1: #26334f; --age2: #27385f; --age3: #283e6f; --age4: #29437f;
+    --age5: #29498f; --age6: #2a4e9f; --age7: #2b54af; --age8: #2c59bf; --age9: #2d5fcf; --age-strong-ink: var(--ink);
   }
 }
 * { box-sizing: border-box; }
@@ -46,6 +51,14 @@ h3 { font-size: 13px; margin: 14px 0 6px; color: var(--muted); text-transform: u
 .btn:hover { border-color: var(--accent); }
 .btn.primary { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
 .btn.ghost { background: transparent; }
+.btn:disabled, .btn:disabled:hover { opacity: .4; cursor: default; border-color: var(--line-2); }
+/* Icon-only buttons: square, the same height as a text button beside them. */
+.btn.icon-btn { display: inline-flex; align-items: center; justify-content: center; padding: 0; width: calc(1.45em + 14px); height: calc(1.45em + 14px); flex: none; }
+.icon { display: block; width: 16px; height: 16px; }
+.btn-pair { display: inline-flex; }
+.btn-pair > .btn:first-child { border-top-right-radius: 0; border-bottom-right-radius: 0; }
+.btn-pair > .btn + .btn { border-top-left-radius: 0; border-bottom-left-radius: 0; margin-left: -1px; }
+.btn-pair > .btn:hover:not(:disabled), .btn-pair > .btn:focus-visible { position: relative; z-index: 1; }
 .btn.link, button.link { border: 0; background: none; color: var(--accent); text-decoration: underline; cursor: pointer; padding: 0; }
 
 /* Layout */
@@ -144,9 +157,10 @@ html { scroll-padding-top: calc(var(--head-h, 0px) + var(--dock-h, 0px)); }
 .bulk-list.small .bulk-item.ph-item { border-left-color: #c2410c; }
 .a0 { background: var(--a0); } .a1 { background: var(--a1); } .a2 { background: var(--a2); } .a3 { background: var(--a3); }
 .a4 { background: var(--a4); } .a5 { background: var(--a5); } .a6 { background: var(--a6); } .a7 { background: var(--a7); } .abase { color: var(--muted); font-style: italic; }
-/* Age: one hue, light (oldest) to dark (newest). */
-.age0 { background: #f3f7fe; } .age1 { background: #e2ecfc; } .age2 { background: #d1e1fa; } .age3 { background: #bed4f7; } .age4 { background: #a9c6f3; }
-.age5 { background: #93b7ef; } .age6 { background: #7aa6ea; color: #0b1a33; } .age7 { background: #5f93e3; color: #fff; } .age8 { background: #437fdb; color: #fff; } .age9 { background: #2a6ccf; color: #fff; }
+/* Age: the shades are theme variables (see :root), so dark mode keeps its light text readable. */
+.age0 { background: var(--age0); } .age1 { background: var(--age1); } .age2 { background: var(--age2); } .age3 { background: var(--age3); } .age4 { background: var(--age4); }
+.age5 { background: var(--age5); } .age6 { background: var(--age6); } .age7 { background: var(--age7); }
+.age8 { background: var(--age8); color: var(--age-strong-ink); } .age9 { background: var(--age9); color: var(--age-strong-ink); }
 .age-sw { width: 14px; height: 12px; display: inline-block; border-radius: 2px; }
 .swatch { width: 12px; height: 12px; border-radius: 50%; display: inline-block; flex: none; }
 

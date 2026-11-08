@@ -35,6 +35,19 @@ export function fmtDuration(ms) {
   return Math.floor(m / 60) + ' h ' + String(m % 60).padStart(2, '0') + ' min';
 }
 
+// Small line icons for icon-only buttons (the button carries the accessible name). 16px, drawn in currentColor.
+const ICONS = {
+  play: [['path', { d: 'M5 3.5v9l7.5-4.5z', fill: 'currentColor', stroke: 'none' }]],
+  pause: [['rect', { x: 4, y: 3.5, width: 2.75, height: 9, rx: 0.6, fill: 'currentColor', stroke: 'none' }], ['rect', { x: 9.25, y: 3.5, width: 2.75, height: 9, rx: 0.6, fill: 'currentColor', stroke: 'none' }]],
+  plus: [['path', { d: 'M8 3.5v9M3.5 8h9' }]],
+  minus: [['path', { d: 'M3.5 8h9' }]],
+  close: [['path', { d: 'M4 4l8 8M12 4l-8 8' }]],
+};
+export function icon(name) {
+  return svg('svg', { class: 'icon', viewBox: '0 0 16 16', width: 16, height: 16, fill: 'none', stroke: 'currentColor', 'stroke-width': 2, 'stroke-linecap': 'round', 'aria-hidden': 'true', focusable: 'false' },
+    ICONS[name].map(([tag, attrs]) => svg(tag, attrs)));
+}
+
 // Origin and kind colours, each with a pattern so nothing depends on colour alone.
 // Validated with the dataviz palette checker (adjacent pairs in stacking order, light surface): the reference
 // categorical hues, with baseline text as a neutral grey. Aqua and magenta sit in the colour-blind warning band, so every

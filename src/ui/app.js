@@ -2,7 +2,7 @@
 // the `load` function it is given, analyses it in a worker, and shows the timeline, the document at the chosen step, the
 // summary, the indicators and the authors. Everything stays in this page.
 
-import { el, fmtInt, fmtDateTime, fmtDuration, KIND_STYLE } from './dom.js';
+import { el, icon, fmtInt, fmtDateTime, fmtDuration, KIND_STYLE } from './dom.js';
 import { renderTimeline } from './timeline.js';
 import { renderDocument, renderMinimap, MODES, authorColor } from './docview.js';
 import { summaryPanel, bulkPanel, indicatorsPanel, authorsPanel, chartsPanel, warningsBanner, defLink } from './panels.js';
@@ -30,7 +30,7 @@ export function startApp(root, opts) {
   const actions = opts.actions || {};
   const st = {
     raw: null, A: null, settings: normalizeSettings({}), context: Object.assign({}, opts.context || {}), notes: opts.notes || '',
-    tab: 0, mode: 'change', axis: 'step', level: 'auto', zoom: null, ends: null, bars: [], cur: 0, rangeFrom: null, playing: null, speed: 3,
+    tab: 0, mode: 'change', axis: 'step', level: 'auto', zoom: null, zoomStack: [], ends: null, bars: [], cur: 0, rangeFrom: null, playing: null, speed: 3,
     tlHidden: readHidden(),
   };
   let D = definitions(st.settings);
@@ -56,6 +56,9 @@ export function startApp(root, opts) {
   }
 
   function button(label, onClick, cls, title) { return el('button', { type: 'button', class: 'btn ' + (cls || ''), title, on: { click: onClick } }, label); }
+  function iconButton(name, label, onClick, cls, title) {
+    return el('button', { type: 'button', class: 'btn icon-btn ' + (cls || ''), 'aria-label': label, title: title || label, on: { click: onClick } }, icon(name));
+  }
 
   function setHeader() {
     headerButtons.replaceChildren(...[
@@ -66,7 +69,7 @@ export function startApp(root, opts) {
       actions.diagnostics ? button('Diagnostics', actions.diagnostics, 'ghost', 'Check that DocInsight reads this document correctly') : null,
       actions.popOut && st.raw ? button('Pop out', () => actions.popOut(st.raw, st.context), 'ghost', 'Open in its own tab') : null,
       actions.back ? button('Open another', actions.back, 'ghost') : null,
-      actions.close ? button('Close', actions.close, 'ghost', 'Close (Escape)') : null,
+      actions.close ? iconButton('close', 'Close', actions.close, 'ghost', 'Close (Escape)') : null,
     ].filter(Boolean));
   }
 
@@ -112,7 +115,7 @@ export function startApp(root, opts) {
     }
     st.A = await analyseAsync(st.raw, st.settings, { teacherUid: st.context.teacherUid, title: st.context.title, timeZone: st.context.timeZone });
     D = definitions(st.settings);
-    st.zoom = null; st.rangeFrom = null; st.level = 'auto';
+    st.zoom = null; st.zoomStack = []; st.rangeFrom = null; st.level = 'auto';
     regroup();
     st.cur = st.bars.length - 1;
     build();
@@ -153,7 +156,7 @@ export function startApp(root, opts) {
   }
 
   function goToEntry(entry, opts2 = {}) {
-    if (st.zoom && (entry < st.zoom[0] || entry > st.zoom[1])) { st.zoom = null; regroup(); }
+    if (st.zoom && (entry < st.zoom[0] || entry > st.zoom[1])) { st.zoom = null; st.zoomStack = []; regroup(); }
     st.rangeFrom = null;
     st.cur = barOfEntry(entry);
     if (opts2.mode) st.mode = opts2.mode;
@@ -179,8 +182,28 @@ export function startApp(root, opts) {
     goToEntry(target);
   }
 
+  // ---- Zoom: + halves the steps shown, centred on the current one; − goes back the way it came ----
+  function zoomInRange() {
+    const bars = st.bars, n = bars.length;
+    if (!n) return null;
+    const keep = Math.ceil(n / 2);
+    const start = Math.max(0, Math.min(n - keep, st.cur - Math.floor(keep / 2)));
+    const r = [bars[start].a, bars[start + keep - 1].b];
+    const [a, b] = st.zoom || [0, st.A.entries.n - 1];
+    return r[0] === a && r[1] === b ? null : r;
+  }
+  function zoomTo(range) {
+    const e = st.bars[st.cur].b;
+    st.zoom = range; st.rangeFrom = null;
+    regroup();
+    st.cur = barOfEntry(e);
+    update(true);
+  }
+  function zoomIn() { const r = zoomInRange(); if (r) { st.zoomStack.push(st.zoom); zoomTo(r); } }
+  function zoomOut() { if (st.zoom) zoomTo(st.zoomStack.pop() || null); }
+
   // ---- Building the main view ----
-  let tlHost, scrub, stepInfo, docHost, minimap, modeButtons, rangeNote, levelSelect, axisButtons, zoomOut, playBtn, tabSelect;
+  let tlHost, scrub, stepInfo, docHost, minimap, modeButtons, rangeNote, levelSelect, axisButtons, zoomInBtn, zoomOutBtn, playBtn, tabSelect;
   let timeline, tlToggle, dock, docPanel, docWrap;
 
   function build() {
@@ -194,8 +217,11 @@ export function startApp(root, opts) {
       ['auto', ...LEVELS].map(L => el('option', { value: L }, LEVEL_NAMES[L])));
     axisButtons = el('div', { class: 'seg tl-full', role: 'group', 'aria-label': 'Timeline axis' },
       ['step', 'clock'].map(a => el('button', { type: 'button', class: 'seg-btn', 'data-axis': a, 'aria-pressed': String(st.axis === a), on: { click: () => { st.axis = a; update(false); } } }, a === 'step' ? 'By step' : 'By clock')));
-    zoomOut = button('Zoom out', () => { const e = st.bars[st.cur].b; st.zoom = null; regroup(); st.cur = barOfEntry(e); update(true); }, 'ghost tl-full');
-    playBtn = button('Play', togglePlay, '', 'Play (Space)');
+    zoomOutBtn = iconButton('minus', 'Zoom out', zoomOut, '', 'Zoom out (-)');
+    zoomInBtn = iconButton('plus', 'Zoom in', zoomIn, '', 'Zoom in around this step (+)');
+    const zoomPair = el('div', { class: 'btn-pair tl-full', role: 'group', 'aria-label': 'Zoom' }, zoomOutBtn, zoomInBtn);
+    playBtn = iconButton('play', 'Play', togglePlay);
+    showPlaying();
     const speedSel = el('select', { 'aria-label': 'Play speed', on: { change: e => { st.speed = Number(e.target.value); if (st.playing) { togglePlay(); togglePlay(); } } } }, SPEEDS.map(s => el('option', { value: s, selected: s === st.speed }, `${s} steps/s`)));
     const legend = el('div', { class: 'legend tl-full' }, [0, 1, 2, 3, 4, 5, 6, 7].map(k => el('span', { class: 'key' }, el('i', { class: 'sw p-' + (KIND_STYLE[k].pattern || 'none'), style: `background-color:${KIND_STYLE[k].color}` }), KIND_STYLE[k].name)),
       el('span', { class: 'key' }, el('i', { class: 'sw flagmark' }), 'flag'), defLink('steps', openDef, 'steps'));
@@ -211,7 +237,7 @@ export function startApp(root, opts) {
 
     tlToggle = el('button', { type: 'button', class: 'btn ghost tl-toggle', 'aria-controls': 'tl-panel', on: { click: toggleTimeline } });
     timeline = el('section', { class: 'panel timeline', id: 'tl-panel', 'aria-labelledby': 'h-tl' },
-      el('div', { class: 'tl-controls' }, el('h2', { id: 'h-tl' }, 'Timeline'), levelSelect, axisButtons, zoomOut, playBtn, speedSel,
+      el('div', { class: 'tl-controls' }, el('h2', { id: 'h-tl' }, 'Timeline'), levelSelect, axisButtons, zoomPair, playBtn, speedSel,
         el('span', { class: 'hint tl-full' }, 'Drag across bars to zoom · Shift-click a second bar to see a range'), tlToggle),
       tlHost, scrub, stepInfo, legend);
     // The timeline stays pinned under the header while the document and the side panels scroll beneath it.
@@ -271,12 +297,13 @@ export function startApp(root, opts) {
     st.cur = Math.max(0, Math.min(bars.length - 1, st.cur));
     if (!st.tlHidden) renderTimeline(tlHost, A, { bars, cur: st.cur, rangeFrom: st.rangeFrom, axis: st.axis }, {
       select: (i, shift) => { if (shift) st.rangeFrom = st.rangeFrom == null ? st.cur : st.rangeFrom; else st.rangeFrom = null; st.cur = i; update(true); },
-      zoom: (i, j) => { st.zoom = [bars[i].a, bars[j].b]; regroup(); st.cur = st.bars.length - 1; st.rangeFrom = null; update(true); },
+      zoom: (i, j) => { st.zoomStack.push(st.zoom); st.zoom = [bars[i].a, bars[j].b]; regroup(); st.cur = st.bars.length - 1; st.rangeFrom = null; update(true); },
     });
     scrub.max = String(bars.length - 1);
     scrub.value = String(st.cur);
     levelSelect.value = st.level;
-    zoomOut.hidden = !st.zoom;
+    zoomOutBtn.disabled = !st.zoom;
+    zoomInBtn.disabled = !zoomInRange();
     for (const b of axisButtons.children) b.setAttribute('aria-pressed', String(b.dataset.axis === st.axis));
     for (const b of modeButtons.children) b.setAttribute('aria-pressed', String(b.dataset.mode === st.mode));
 
@@ -314,16 +341,23 @@ export function startApp(root, opts) {
     return A.users.map((u, i) => el('span', { class: 'key' }, el('span', { class: 'swatch', style: `background:${authorColor(A, i)}` }), u.name));
   }
 
+  function showPlaying() {
+    const label = st.playing ? 'Pause' : 'Play';
+    playBtn.replaceChildren(icon(st.playing ? 'pause' : 'play'));
+    playBtn.setAttribute('aria-label', label);
+    playBtn.title = label + ' (Space)';
+  }
+
   function togglePlay() {
-    if (st.playing) { clearInterval(st.playing); st.playing = null; playBtn.textContent = 'Play'; return; }
+    if (st.playing) { clearInterval(st.playing); st.playing = null; showPlaying(); return; }
     if (st.cur >= st.bars.length - 1) st.cur = 0;
     st.rangeFrom = null;
-    playBtn.textContent = 'Pause';
     st.playing = setInterval(() => {
       if (st.cur >= st.bars.length - 1) { togglePlay(); return; }
       st.cur++;
       update(true);
     }, 1000 / st.speed);
+    showPlaying();
   }
 
   // ---- Keyboard ----
@@ -345,6 +379,8 @@ export function startApp(root, opts) {
     else if (k === ' ' && t.tagName !== 'BUTTON') togglePlay();
     else if (/^[1-4]$/.test(k) && !ev.metaKey && !ev.ctrlKey && !ev.altKey) { st.mode = MODES[Number(k) - 1].id; update(false); }
     else if ((k === 't' || k === 'T') && !ev.metaKey && !ev.ctrlKey && !ev.altKey) toggleTimeline();
+    else if ((k === '+' || k === '=') && !ev.metaKey && !ev.ctrlKey && !ev.altKey) zoomIn();
+    else if ((k === '-' || k === '_') && !ev.metaKey && !ev.ctrlKey && !ev.altKey) zoomOut();
     else if (k === 'Escape' && actions.close) actions.close();
     else handled = false;
     if (handled) ev.preventDefault();
