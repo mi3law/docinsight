@@ -34,23 +34,29 @@ talk to its optional update helper (below), which does nothing unless you set it
 
 ## Updating
 
-Chrome never updates a folder-loaded extension, so DocInsight checks for you: when GitHub has a newer version, an
-**Update available** button appears in its header. It offers two ways:
+Chrome never updates a folder-loaded extension, and it keeps running the version it loaded even after the folder's files
+change. So DocInsight checks two things each time you open it:
 
-- **By hand:** download the ZIP, unzip it, copy everything inside over the files in your DocInsight folder (keep the
-  folder where it is), and press **Reload DocInsight**. DocInsight and the Doc's tab reload with the new version.
-- **In one click (Mac, optional):** set up the update helper once by pasting this line into Terminal (Applications,
-  then Utilities):
+- **Its folder.** If the folder already holds another version (you pulled a git clone, or copied new files over),
+  DocInsight reloads itself and the Doc, then opens again on the new version. Nothing to press.
+- **GitHub.** When GitHub has a newer version (DocInsight asks at most every ten minutes), an **Update available**
+  button appears in its header. It offers two ways:
 
-  ```bash
-  curl -fsSL https://raw.githubusercontent.com/mi3law/docinsight/main/updater/setup-mac.sh | bash
-  ```
+  - **By hand:** download the ZIP, unzip it, copy everything inside over the files in your DocInsight folder (keep the
+    folder where it is), and press **Reload DocInsight**. DocInsight and the Doc's tab reload with the new version. If
+    the folder is a git clone, `git pull` there instead; DocInsight picks it up the next time you open it.
+  - **In one click (Mac, optional):** set up the update helper once by pasting this line into Terminal (Applications,
+    then Utilities):
 
-  After that, **Update now** downloads the new version into your DocInsight folder and reloads it. The setup finds every
-  DocInsight folder loaded in Chrome on that Mac. Run the line again after moving the folder; add `-s -- --remove`
-  after `bash` to remove the helper. The first update may make macOS ask whether Google Chrome may use the folder
-  DocInsight is in (if it is in Documents, Desktop or Downloads): allow it. If the folder is a git clone, the helper runs
-  `git pull --ff-only` there instead of downloading. Windows has no helper yet; update by hand.
+    ```bash
+    curl -fsSL https://raw.githubusercontent.com/mi3law/docinsight/main/updater/setup-mac.sh | bash
+    ```
+
+    After that, **Update now** downloads the new version into your DocInsight folder and reloads it. The setup finds
+    every DocInsight folder loaded in Chrome on that Mac. Run the line again after moving the folder; add
+    `-s -- --remove` after `bash` to remove the helper. The first update may make macOS ask whether Google Chrome may
+    use the folder DocInsight is in (if it is in Documents, Desktop or Downloads): allow it. If the folder is a git
+    clone, the helper runs `git pull --ff-only` there instead of downloading. Windows has no helper yet; update by hand.
 
 The helper is a short script ([updater/host-mac.sh](updater/host-mac.sh)) registered with Chrome as a native messaging
 host that only DocInsight may start. Nothing runs in the background: Chrome starts it when you press **Update now**, and
@@ -144,7 +150,7 @@ author is you. The web page reads only the Doc you name, with a token that stays
 else, there are no analytics, and no copy of any document is kept. Exported records are files you save yourself.
 
 To check for updates, the extension reads the version number in this repository's `manifest.json` on GitHub, at most
-twice a day. For the beta notice (the version and how long ago the latest change landed), the web page and the extension
+every ten minutes. For the beta notice (the version and how long ago the latest change landed), the web page and the extension
 ask GitHub's API for this repository's latest commit, at most every ten minutes. Neither request carries anything about
 you, your students or any document.
 
@@ -159,7 +165,7 @@ No dependencies and no build step: vanilla JavaScript modules shared by the exte
 | [extension/main-world.js](extension/main-world.js) | Reads the request token Docs keeps in the page and hands it over. |
 | [extension/overlay.html](extension/overlay.html), [overlay.js](extension/overlay.js) | The overlay and its pop-out. |
 | [extension/diagnostics.html](extension/diagnostics.html) | Checks DocInsight against a Doc: rebuilt text against Google's export, how Google batched the typing. Saves reports and anonymised recordings for the tests. |
-| [extension/update.js](extension/update.js) | The update check against GitHub and the **Update available** dialog. |
+| [extension/update.js](extension/update.js) | The update checks (the folder's version, then GitHub's) and the **Update available** dialog. |
 | [updater/](updater/) | The optional Mac update helper: `setup-mac.sh` installs `host-mac.sh` as a Chrome native messaging host. |
 | [src/engine/](src/engine/) | Fetch layer (the only code that knows Google's endpoints), parser and character-identity text model, analysis, indicators, definitions, record export, anonymisation. Pure modules, run in a Web Worker. |
 | [src/ui/](src/ui/) | The interface: timeline, document view, panels, the app shell, and the beta notice (`version.js`). |

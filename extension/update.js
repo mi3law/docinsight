@@ -1,8 +1,12 @@
-// Updates. DocInsight is loaded unpacked, not from the Chrome Web Store, so Chrome never updates it. The overlay asks
-// GitHub for the version number in the repository's manifest (at most twice a day; the request carries nothing about
-// the teacher or any document) and, when it is newer, offers the update: in one click through the optional helper
-// (updater/setup-mac.sh, a Chrome native messaging host that downloads the new version into DocInsight's folder), or
-// by hand, as a download and two steps. Either way DocInsight then reloads itself and the Doc's tab.
+// Updates. DocInsight is loaded unpacked, not from the Chrome Web Store, so Chrome never updates it, and it keeps running
+// the version it loaded even after the folder changes. Two checks, each time the overlay opens:
+// - The folder: when it already holds another version (a git clone that was pulled, or files copied over by hand),
+//   DocInsight reloads itself and the Doc's tab straight away, and the overlay opens again on the new version.
+// - GitHub: the overlay asks for the version number in the repository's manifest (at most once every ten minutes; the
+//   request carries nothing about the teacher or any document) and, when it is newer, offers the update: in one click
+//   through the optional helper (updater/setup-mac.sh, a Chrome native messaging host that downloads the new version
+//   into DocInsight's folder), or by hand, as a download and two steps. Either way DocInsight then reloads itself and
+//   the Doc's tab.
 import { el } from '../src/ui/dom.js';
 
 const REPO = 'mi3law/docinsight';
@@ -11,7 +15,8 @@ const ZIP_URL = `https://github.com/${REPO}/archive/refs/heads/main.zip`;
 const CHANGES_URL = `https://github.com/${REPO}/commits/main`;
 const HOST = 'com.mi3law.docinsight.updater';
 export const SETUP_MAC = `curl -fsSL https://raw.githubusercontent.com/${REPO}/main/updater/setup-mac.sh | bash`;
-const EVERY = 12 * 3600e3;
+const EVERY = 10 * 60e3;
+const RETRY = 2 * 60e3;
 
 // Dotted version numbers, compared part by part: isNewer('0.10.0', '0.9.3') is true.
 export function isNewer(a, b) {
@@ -23,11 +28,11 @@ export function isNewer(a, b) {
   return false;
 }
 
-// { current, latest, available }. The last answer is kept in chrome.storage.local, so most openings make no request.
+// { current, latest, available }. The last answer is kept in chrome.storage.local for ten minutes.
 export async function checkForUpdate(force) {
   const current = chrome.runtime.getManifest().version;
   let { updateCheck: c } = await chrome.storage.local.get('updateCheck');
-  if (force || !c || !(Date.now() - c.at < EVERY)) {
+  if (force || !c || !(Date.now() - c.at >= 0 && Date.now() - c.at < EVERY)) {
     try {
       const r = await fetch(MANIFEST_URL, { cache: 'no-store', credentials: 'omit' });
       if (r.ok) {
@@ -38,6 +43,43 @@ export async function checkForUpdate(force) {
   }
   const latest = c && c.latest || null;
   return { current, latest, available: !!latest && isNewer(latest, current) };
+}
+
+// Whether to reload DocInsight so Chrome runs the version in its folder. Not when the two match or the folder can't be
+// read, and not again when the same reload was tried in the last two minutes (the folder's version did not load: a
+// broken manifest, say), so the overlay never reloads in a loop. last: { from, to, at } of the reload tried before.
+export function shouldReload(running, inFolder, last, now = Date.now()) {
+  if (!running || !inFolder || running === inFolder) return false;
+  return !(last && last.from === running && last.to === inFolder && now - last.at >= 0 && now - last.at < RETRY);
+}
+
+// The version in DocInsight's folder. Chrome serves an unpacked extension's files from the folder as they are now,
+// while chrome.runtime.getManifest() is the manifest it loaded.
+async function folderVersion() {
+  try {
+    const r = await fetch(chrome.runtime.getURL('manifest.json'), { cache: 'no-store' });
+    return r.ok ? String((await r.json()).version || '') || null : null;
+  } catch { return null; }
+}
+
+// { from, to } when DocInsight should reload to run its folder's version (the reload is noted first), else null.
+export async function folderUpdate() {
+  const running = chrome.runtime.getManifest().version;
+  const inFolder = await folderVersion();
+  if (!inFolder || inFolder === running) return null;
+  try {
+    const { autoReload: last } = await chrome.storage.local.get('autoReload');
+    if (!shouldReload(running, inFolder, last)) return null;
+    await chrome.storage.local.set({ autoReload: { from: running, to: inFolder, at: Date.now() } });
+  } catch { return null; /* without the note a failed reload could repeat: leave it to the update notice */ }
+  return { from: running, to: inFolder };
+}
+
+// Reload the Doc's tab just after the extension, so the new version runs there too. reloadPage asks the Doc's tab to
+// reload (and to open DocInsight again); reloading the extension closes this page.
+export function reloadDocInsight(reloadPage, reload = () => chrome.runtime.reload()) {
+  if (reloadPage) reloadPage();
+  setTimeout(reload, 150);
 }
 
 // One message to the helper: { cmd: 'ping' } or { cmd: 'update' }. Without the helper Chrome answers "native messaging
@@ -78,11 +120,9 @@ export function updateDialog(info, deps = {}) {
   const status = el('p', { class: 'upd-status', 'aria-live': 'polite' });
   const btn = (label, onClick, cls) => el('button', { type: 'button', class: 'btn ' + (cls || ''), on: { click: onClick } }, label);
 
-  // Reload the Doc's tab just after the extension, so the new version runs there too.
   function reloadAll() {
     status.textContent = 'Reloading DocInsight and this Doc…';
-    reloadPage();
-    setTimeout(reload, 150);
+    reloadDocInsight(reloadPage, reload);
   }
 
   const auto = el('div', { class: 'upd-auto', hidden: true },

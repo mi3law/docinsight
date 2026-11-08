@@ -4,7 +4,7 @@ import { startApp } from '../src/ui/app.js';
 import { getContext, fetchText, closeOverlay, embedded, reloadPageSoon } from './bridge.js';
 import { loadHistory } from '../src/engine/fetch.js';
 import { DocInsightError } from '../src/engine/errors.js';
-import { checkForUpdate, openUpdateDialog } from './update.js';
+import { checkForUpdate, openUpdateDialog, folderUpdate, reloadDocInsight } from './update.js';
 import { latestCommit } from '../src/ui/version.js';
 
 const root = document.getElementById('app');
@@ -73,6 +73,19 @@ if (popout) {
 } else if (!embedded()) {
   root.textContent = 'Open a Google Doc and press the DocInsight button there.';
 } else {
+  // When DocInsight's folder holds another version than the one Chrome is running (a git pull, or files copied over),
+  // reload to it before reading anything: the Doc's tab reloads too and opens DocInsight again.
+  folderUpdate().catch(() => null).then(up => {
+    if (!up) return start();
+    const msg = document.createElement('p');
+    msg.style.padding = '24px';
+    msg.textContent = `Updating DocInsight to version ${up.to}…`;
+    root.replaceChildren(msg);
+    reloadDocInsight(reloadPageSoon);
+  });
+}
+
+function start() {
   getContext().then(ctx => {
     const p = ctx.params || {};
     const context = { title: ctx.title, href: ctx.href, docId: ctx.docId, timeZone };
