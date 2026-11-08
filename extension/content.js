@@ -71,6 +71,9 @@
         .catch(function (e) { reply({ type: 'docinsight:fetched', id: msg.id, error: String(e && e.message || e) }); });
     } else if (msg.type === 'docinsight:close') {
       close();
+    } else if (msg.type === 'docinsight:reload-page') {
+      // DocInsight is about to reload itself after an update; reload the Doc after it, to load the new version here.
+      setTimeout(function () { location.reload(); }, 600);
     }
   });
 

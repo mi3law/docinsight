@@ -58,6 +58,7 @@ export function startApp(root, opts) {
 
   function setHeader() {
     headerButtons.replaceChildren(...[
+      actions.update ? button('Update available', actions.update, 'update', 'A newer DocInsight is on GitHub') : null,
       st.A ? button('Export record', openExport, 'primary') : null,
       st.A ? button('Settings', openSettings) : null,
       actions.diagnostics ? button('Diagnostics', actions.diagnostics, 'ghost', 'Check that DocInsight reads this document correctly') : null,
@@ -400,5 +401,6 @@ export function startApp(root, opts) {
 
   if (opts.raw) st.raw = opts.raw;
   load();
-  return { state: st };
+  // refreshHeader: for an action that arrives later (the extension's update notice sets actions.update).
+  return { state: st, refreshHeader: setHeader };
 }

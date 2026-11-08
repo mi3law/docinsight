@@ -41,3 +41,9 @@ export async function fetchText(url, opts = {}) {
 export function closeOverlay() {
   if (embedded()) window.parent.postMessage({ type: 'docinsight:close' }, DOCS);
 }
+
+// After an update the extension reloads itself, which leaves this tab's content script disconnected: the page reloads
+// itself a moment later so the DocInsight button works again.
+export function reloadPageSoon() {
+  if (embedded()) window.parent.postMessage({ type: 'docinsight:reload-page' }, DOCS);
+}
