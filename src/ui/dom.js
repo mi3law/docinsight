@@ -42,6 +42,7 @@ const ICONS = {
   plus: [['path', { d: 'M8 3.5v9M3.5 8h9' }]],
   minus: [['path', { d: 'M3.5 8h9' }]],
   close: [['path', { d: 'M4 4l8 8M12 4l-8 8' }]],
+  chevron: [['path', { d: 'M6 3.5L10.5 8 6 12.5' }]],   // points right; rotated in CSS where it should point elsewhere
 };
 export function icon(name) {
   return svg('svg', { class: 'icon', viewBox: '0 0 16 16', width: 16, height: 16, fill: 'none', stroke: 'currentColor', 'stroke-width': 2, 'stroke-linecap': 'round', 'aria-hidden': 'true', focusable: 'false' },
